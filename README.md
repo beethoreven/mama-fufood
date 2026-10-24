@@ -194,7 +194,7 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 **B3. 先讓網站上線(GitHub Pages)。** B4 的「品牌」要填網站的首頁、隱私權政策、服務條款三個網址,Google 會實際打開它們;網站沒上線(打開是 404)就填不完品牌,B6 的「發布應用程式」按鈕也會一直是灰的。網站的首頁和條款頁是純靜態檔,不需要後端就能打開,所以現在就可以上線。
 
 1. 打開 `mama-fufood-web` 的 GitHub 頁面 → **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main`、資料夾 `/ (root)` → Save**。
-2. 等一兩分鐘,同一頁上方會顯示網址。
+2. 等一兩分鐘,同一頁上方會顯示「Your site is live at …」和網址。沒出現就是沒存到,回第 1 步確認有按 **Save**。
 
 **確認**:下面三個網址都打得開(不是 404),條款頁顯示的是對應的文件:
 - <https://beethoreven.github.io/mama-fufood-web/>
@@ -684,7 +684,7 @@ This Part follows the **Traditional Chinese console UI**; the English UI labels 
 **B3. Put the website online first (GitHub Pages).** Branding in B4 asks for the website's home page, privacy policy and terms of service URLs, and Google actually opens them; while the site is offline (404) Branding can't be completed and B6's "Publish app" button stays greyed out. The home page and legal pages are static files that open without the backend, so the site can go online now.
 
 1. Open the `mama-fufood-web` GitHub page → **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main`, folder `/ (root)` → Save**.
-2. Wait a minute or two; the URL appears at the top of the same page.
+2. Wait a minute or two; "Your site is live at …" and the URL appear at the top of the same page. If they don't, the setting wasn't saved — go back to step 1 and make sure you pressed **Save**.
 
 **Check**: all three URLs open (not 404), and the legal page shows the matching document:
 - <https://beethoreven.github.io/mama-fufood-web/>
