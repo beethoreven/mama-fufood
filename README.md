@@ -100,35 +100,88 @@ git commit -m "Update mama-fufood-backend submodule pointer"
 
 ★ GitHub 的 SSH 別名是 **`github.com-beethoreven`**,不是純 `github.com`。用錯會推不上去。
 
-1. 到 <https://github.com/new> 建立四個**空的**公開 repo:`mama-fufood`、`mama-fufood-app`、`mama-fufood-backend`、`mama-fufood-web`。Owner 選 `beethoreven`、Visibility 選 **Public**;**不要**勾選加入 README、.gitignore 或授權條款,否則第一次推送會衝突。
-2. **順序不能反**:先推三個子模組,再推 meta。meta 記錄的是子模組的 commit,反過來會指向 GitHub 上還不存在的 commit。每個子模組:
+★ 下面的指令都用 `git -C <資料夾>` 指定是哪一個 repo,**一律在 meta repo 的資料夾(`mama-fufood/`)裡執行**,不用 `cd` 進出,也就不會在錯的資料夾裡設定或推送。每一步開頭都有「確認是否做過」,做過就跳到下一步。
 
-   ```bash
-   cd mama-fufood-backend          # 再換 mama-fufood-web、mama-fufood-app 各做一次
-   git status                      # 確認只有要提交的檔案
-   git add -A
-   git commit -m "Initial commit"
-   git remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-backend.git
-   git push -u origin main
-   cd ..
-   ```
+**A1. 在 GitHub 建立四個空的公開 repo**
 
-3. 回到 meta repo,把三個子模組掛上去再推:
+- 確認是否做過:瀏覽器打開 `https://github.com/beethoreven/mama-fufood`、`…/mama-fufood-app`、`…/mama-fufood-backend`、`…/mama-fufood-web`,四個都存在就跳過。
+- 做法:到 <https://github.com/new> 建立這四個 repo。Owner 選 `beethoreven`、Visibility 選 **Public**;**不要**勾選加入 README、.gitignore 或授權條款,否則第一次推送會衝突。
 
-   ```bash
-   git submodule add https://github.com/beethoreven/mama-fufood-app.git mama-fufood-app
-   git submodule add https://github.com/beethoreven/mama-fufood-backend.git mama-fufood-backend
-   git submodule add https://github.com/beethoreven/mama-fufood-web.git mama-fufood-web
-   git status                      # 只應該有 .gitignore、.gitmodules、README.md 與三個子模組
-   git add -A
-   git commit -m "Initial commit"
-   git remote add origin git@github.com-beethoreven:beethoreven/mama-fufood.git
-   git push -u origin main
-   ```
+**A2. 在本機提交**
 
-   子模組的資料夾已經是 git repo,`git submodule add` 會直接掛上現有的 repo,不會重新下載。`.gitmodules` 用 https 網址,別人才 clone 得到;推送時用的是各子模組自己的 `origin`。
+- 確認是否做過:
 
-**確認**:GitHub 上四個 repo 都看得到檔案;`mama-fufood` repo 裡三個子模組顯示成「資料夾名稱 @ 一串 commit 編號」,點得進去。
+  ```bash
+  git log --oneline -1
+  git -C mama-fufood-app log --oneline -1
+  git -C mama-fufood-backend log --oneline -1
+  git -C mama-fufood-web log --oneline -1
+  ```
+
+  四個都印出一筆提交,而且 `cat .gitmodules` 列出三個子模組,就跳過。
+- 做法:三個子專案先各自提交,再在 meta 掛上子模組後提交(子模組的資料夾已經是 git repo,`git submodule add` 會直接掛上現有的 repo,不會重新下載;`.gitmodules` 用 https 網址,別人才 clone 得到):
+
+  ```bash
+  git -C mama-fufood-app add -A
+  git -C mama-fufood-app commit -m "Initial commit"
+  git -C mama-fufood-backend add -A
+  git -C mama-fufood-backend commit -m "Initial commit"
+  git -C mama-fufood-web add -A
+  git -C mama-fufood-web commit -m "Initial commit"
+  git submodule add https://github.com/beethoreven/mama-fufood-app.git mama-fufood-app
+  git submodule add https://github.com/beethoreven/mama-fufood-backend.git mama-fufood-backend
+  git submodule add https://github.com/beethoreven/mama-fufood-web.git mama-fufood-web
+  git add -A
+  git commit -m "Add the app, backend and web repos as submodules"
+  ```
+
+**A3. 設定每個 repo 要推到哪裡(remote)**
+
+- 確認是否做過:
+
+  ```bash
+  git remote -v
+  git -C mama-fufood-app remote -v
+  git -C mama-fufood-backend remote -v
+  git -C mama-fufood-web remote -v
+  ```
+
+  每個 repo 的 `origin` 網址結尾都要是**它自己的名稱**:meta 是 `…/mama-fufood.git`,`mama-fufood-app` 是 `…/mama-fufood-app.git`,以此類推。四個都對就跳過。
+- 沒有 `origin` 的,加上去:
+
+  ```bash
+  git remote add origin git@github.com-beethoreven:beethoreven/mama-fufood.git
+  git -C mama-fufood-app remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-app.git
+  git -C mama-fufood-backend remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-backend.git
+  git -C mama-fufood-web remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-web.git
+  ```
+
+- 已經有 `origin` 但網址不對的:把那一行的 `remote add` 換成 `remote set-url`。
+
+**A4. 推送(順序不能反:三個子專案先,meta 最後)**
+
+meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存在的 commit。
+
+- 確認是否做過:
+
+  ```bash
+  git ls-remote https://github.com/beethoreven/mama-fufood-app.git
+  git -C mama-fufood-app log -1 --format=%H
+  ```
+
+  第一行印出的 `refs/heads/main` 前面那串編號,要和第二行一樣;另外三個 repo 照樣比對(meta 用 `git log -1 --format=%H`)。都一樣就跳過。
+- 做法:
+
+  ```bash
+  git -C mama-fufood-app push -u origin main
+  git -C mama-fufood-backend push -u origin main
+  git -C mama-fufood-web push -u origin main
+  git push -u origin main
+  ```
+
+**確認**:GitHub 上四個 repo 都看得到各自的檔案;`mama-fufood` repo 裡三個子模組顯示成「資料夾名稱 @ 一串 commit 編號」,點得進去。
+
+**推錯了怎麼辦**:某個 GitHub repo 收到的是別的 repo 的內容(例如 A3 的網址設錯):先用 `remote set-url` 改正網址,再對那個 repo 用 `git -C <資料夾> push --force -u origin main` 覆蓋。強制推送會蓋掉 GitHub 上那個分支原本的內容,只在確定那份內容是推錯的時候用。
 
 #### Part B. Google Cloud(登入與雲端硬碟)
 
@@ -515,35 +568,88 @@ All four repos are **Public**: on GitHub's free plan, Pages can only publish fro
 
 ★ The GitHub SSH alias is **`github.com-beethoreven`**, not plain `github.com`. Using the wrong one means the push fails.
 
-1. Go to <https://github.com/new> and create four **empty** public repos: `mama-fufood`, `mama-fufood-app`, `mama-fufood-backend`, `mama-fufood-web`. Choose owner `beethoreven` and visibility **Public**; do **not** tick adding a README, .gitignore or license, or the first push will conflict.
-2. **The order can't be reversed**: push the three submodules first, then the meta repo. The meta repo records the submodules' commits; the other way round it would point at commits that don't exist on GitHub yet. For each submodule:
+★ Every command below names its repo with `git -C <folder>`, and **all of them run from the meta repo's folder (`mama-fufood/`)** — no `cd` back and forth, so nothing gets configured or pushed from the wrong folder. Every step starts with "Check whether it's done"; if it is, move on to the next step.
 
-   ```bash
-   cd mama-fufood-backend          # then repeat for mama-fufood-web and mama-fufood-app
-   git status                      # confirm only the files you mean to commit are there
-   git add -A
-   git commit -m "Initial commit"
-   git remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-backend.git
-   git push -u origin main
-   cd ..
-   ```
+**A1. Create four empty public repos on GitHub**
 
-3. Back in the meta repo, attach the three submodules and push:
+- Check whether it's done: open `https://github.com/beethoreven/mama-fufood`, `…/mama-fufood-app`, `…/mama-fufood-backend` and `…/mama-fufood-web` in a browser; if all four exist, skip this step.
+- How: go to <https://github.com/new> and create these four repos. Choose owner `beethoreven` and visibility **Public**; do **not** tick adding a README, .gitignore or license, or the first push will conflict.
 
-   ```bash
-   git submodule add https://github.com/beethoreven/mama-fufood-app.git mama-fufood-app
-   git submodule add https://github.com/beethoreven/mama-fufood-backend.git mama-fufood-backend
-   git submodule add https://github.com/beethoreven/mama-fufood-web.git mama-fufood-web
-   git status                      # should only show .gitignore, .gitmodules, README.md and the three submodules
-   git add -A
-   git commit -m "Initial commit"
-   git remote add origin git@github.com-beethoreven:beethoreven/mama-fufood.git
-   git push -u origin main
-   ```
+**A2. Commit locally**
 
-   The submodule folders are already git repos, so `git submodule add` attaches the existing repos instead of downloading them again. `.gitmodules` uses https URLs so others can clone; pushing uses each submodule's own `origin`.
+- Check whether it's done:
 
-**Check**: all four repos show files on GitHub; in the `mama-fufood` repo the three submodules appear as "folder name @ a commit hash" and can be clicked through.
+  ```bash
+  git log --oneline -1
+  git -C mama-fufood-app log --oneline -1
+  git -C mama-fufood-backend log --oneline -1
+  git -C mama-fufood-web log --oneline -1
+  ```
+
+  If all four print a commit and `cat .gitmodules` lists the three submodules, skip this step.
+- How: commit each of the three subprojects first, then attach them as submodules in the meta repo and commit (the submodule folders are already git repos, so `git submodule add` attaches the existing repos instead of downloading them again; `.gitmodules` uses https URLs so others can clone):
+
+  ```bash
+  git -C mama-fufood-app add -A
+  git -C mama-fufood-app commit -m "Initial commit"
+  git -C mama-fufood-backend add -A
+  git -C mama-fufood-backend commit -m "Initial commit"
+  git -C mama-fufood-web add -A
+  git -C mama-fufood-web commit -m "Initial commit"
+  git submodule add https://github.com/beethoreven/mama-fufood-app.git mama-fufood-app
+  git submodule add https://github.com/beethoreven/mama-fufood-backend.git mama-fufood-backend
+  git submodule add https://github.com/beethoreven/mama-fufood-web.git mama-fufood-web
+  git add -A
+  git commit -m "Add the app, backend and web repos as submodules"
+  ```
+
+**A3. Set where each repo pushes to (remote)**
+
+- Check whether it's done:
+
+  ```bash
+  git remote -v
+  git -C mama-fufood-app remote -v
+  git -C mama-fufood-backend remote -v
+  git -C mama-fufood-web remote -v
+  ```
+
+  Each repo's `origin` URL must end with **its own name**: the meta repo's is `…/mama-fufood.git`, `mama-fufood-app`'s is `…/mama-fufood-app.git`, and so on. If all four are right, skip this step.
+- For any repo without an `origin`, add it:
+
+  ```bash
+  git remote add origin git@github.com-beethoreven:beethoreven/mama-fufood.git
+  git -C mama-fufood-app remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-app.git
+  git -C mama-fufood-backend remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-backend.git
+  git -C mama-fufood-web remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-web.git
+  ```
+
+- For a repo whose `origin` exists but points to the wrong URL: use `remote set-url` instead of `remote add` on that line.
+
+**A4. Push (the order can't be reversed: the three subprojects first, the meta repo last)**
+
+The meta repo records the submodules' commits; pushing it first would point at commits that don't exist on GitHub yet.
+
+- Check whether it's done:
+
+  ```bash
+  git ls-remote https://github.com/beethoreven/mama-fufood-app.git
+  git -C mama-fufood-app log -1 --format=%H
+  ```
+
+  The hash in front of `refs/heads/main` on the first line must match the second line; compare the other three repos the same way (for the meta repo, use `git log -1 --format=%H`). If they all match, skip this step.
+- How:
+
+  ```bash
+  git -C mama-fufood-app push -u origin main
+  git -C mama-fufood-backend push -u origin main
+  git -C mama-fufood-web push -u origin main
+  git push -u origin main
+  ```
+
+**Check**: all four repos show their own files on GitHub; in the `mama-fufood` repo the three submodules appear as "folder name @ a commit hash" and can be clicked through.
+
+**If something was pushed to the wrong repo**: when a GitHub repo received another repo's content (e.g. a wrong URL in A3), first fix the URL with `remote set-url`, then overwrite that repo with `git -C <folder> push --force -u origin main`. A force push replaces what that branch on GitHub held before, so only use it when you're sure that content was pushed by mistake.
 
 #### Part B. Google Cloud (Sign-In and Drive)
 
