@@ -356,14 +356,14 @@ Render 免費方案閒置 15 分鐘會休眠;每 10 分鐘打一次 `/health`,�
 
 #### Part F. 網站(GitHub Pages 與管理後台)
 
-**F1.** 改 `mama-fufood-web/js/config.js`:
+**F1.** 先確認是否做過:打開 `mama-fufood-web/js/config.js`,`googleClientId` 已經有值(`….apps.googleusercontent.com`)就跳到 F3。沒有的話,改 `mama-fufood-web/js/config.js`:
 
 ```js
 apiBase: "https://mama-fufood-backend.onrender.com",   // D7 的後端網址,結尾不要斜線
 googleClientId: "B7 的 Web Client ID",
 ```
 
-然後 commit、push。
+然後 commit、push。只填「用戶端 ID」;B7 畫面上另外顯示的「用戶端密鑰」(`GOCSPX-` 開頭)這個專案用不到,不要填進任何檔案。
 
 **F2.** GitHub Pages 已在 B3 開啟,這裡不用再做;F1 推送後一兩分鐘,網站就會換成新的設定。
 
@@ -852,14 +852,14 @@ Render's free tier sleeps after 15 minutes idle; hitting `/health` every 10 minu
 
 #### Part F. Website (GitHub Pages and the Admin Console)
 
-**F1.** Edit `mama-fufood-web/js/config.js`:
+**F1.** First check whether it's done: open `mama-fufood-web/js/config.js`; if `googleClientId` already has a value (`….apps.googleusercontent.com`), skip to F3. Otherwise edit `mama-fufood-web/js/config.js`:
 
 ```js
 apiBase: "https://mama-fufood-backend.onrender.com",   // the backend URL from D7, no trailing slash
 googleClientId: "the Web Client ID from B7",
 ```
 
-Then commit and push.
+Then commit and push. Fill in only the Client ID; the "Client secret" (starting with `GOCSPX-`) that B7 also shows isn't used by this project — don't put it in any file.
 
 **F2.** GitHub Pages was already turned on in B3, so nothing to do here; a minute or two after F1 is pushed, the site picks up the new settings.
 
