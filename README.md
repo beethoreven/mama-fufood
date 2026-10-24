@@ -74,8 +74,8 @@ git commit -m "Update mama-fufood-backend submodule pointer"
 | 值 | 在哪一步產生 | 要填到哪裡 | 秘密 |
 |---|---|---|---|
 | 網站網址 `https://beethoreven.github.io/mama-fufood-web/` | 已知(repo 名稱決定) | Google 同意畫面的連結;來源只填 `https://beethoreven.github.io` | |
-| Web Client ID(`….apps.googleusercontent.com`) | B6 | Render 的 `GOOGLE_CLIENT_ID`、網站 `js/config.js`、App `env/prod.json` | |
-| 除錯金鑰的 SHA-1 | B6 | Google Cloud 的 Android 用戶端(開發用) | |
+| Web Client ID(`….apps.googleusercontent.com`) | B7 | Render 的 `GOOGLE_CLIENT_ID`、網站 `js/config.js`、App `env/prod.json` | |
+| 除錯金鑰的 SHA-1 | B7 | Google Cloud 的 Android 用戶端(開發用) | |
 | Neon 連線字串 | C3 | Render 的 `DATABASE_URL` | **秘密** |
 | `SESSION_SECRET` | D5 | Render | **秘密** |
 | 後端網址(`https://….onrender.com`) | D7 | 網站 `js/config.js`、App `env/prod.json`、cron-job.org | |
@@ -185,61 +185,83 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 
 #### Part B. Google Cloud(登入與雲端硬碟)
 
-**B1. 建立專案。** 打開 <https://console.cloud.google.com/> → 上方的專案選單 → **New Project** → Project name 填 `mama-fufood`(Location 維持「No organization」)→ **Create**。建好後確認上方的專案選單顯示 `mama-fufood`,之後的步驟都在這個專案裡做。不需要設定付款帳戶。
+這個 Part 照**繁體中文介面**寫,括號裡是英文介面的名稱。
 
-**B2. 啟用 Google Drive API。** 左上選單 → **APIs & Services → Library** → 搜尋「Google Drive API」→ 點進去 → **Enable**。
+**B1. 建立專案。** 打開 <https://console.cloud.google.com/> → 上方的專案選單 → **新增專案**(New Project)→ 專案名稱填 `mama-fufood`(位置維持「無機構」)→ **建立**。建好後確認上方的專案選單顯示 `mama-fufood`,之後的步驟都在這個專案裡做。不需要設定付款帳戶。
 
-**B3. 同意畫面的基本資料(Branding)。** 左上選單 → **Google Auth Platform**。第一次進去會有 **Get started** 的精靈:
-1. App Information:App name 填 `媽媽記副食品`;User support email 選你的 Email。
-2. Audience:選 **External**。
-3. Contact Information:填你的 Email。
-4. 勾選同意 Google API Services User Data Policy → **Create**。
+**B2. 啟用 Google Drive API。** 左上選單 → **API 和服務 → 程式庫**(APIs & Services → Library)→ 搜尋「Google Drive API」→ 點進去 → **啟用**。
 
-建立後到 **Branding** 頁補上(下面沒提到的欄位都留空):
+**B3. 先讓網站上線(GitHub Pages)。** B4 的「品牌」要填網站的首頁、隱私權政策、服務條款三個網址,Google 會實際打開它們;網站沒上線(打開是 404)就填不完品牌,B6 的「發布應用程式」按鈕也會一直是灰的。網站的首頁和條款頁是純靜態檔,不需要後端就能打開,所以現在就可以上線。
 
-| 欄位 | 值 |
-|---|---|
-| App logo | **不要上傳**:外部、正式版的 App 一上傳 Logo 就要走 Google 的驗證流程 |
-| Application home page | `https://beethoreven.github.io/mama-fufood-web/` |
-| Application privacy policy link | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=privacy` |
-| Application terms of service link | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=terms` |
-| Authorized domains | `beethoreven.github.io`(**不是** `github.io`;所有用到的網域都要先登記在這裡) |
+1. 打開 `mama-fufood-web` 的 GitHub 頁面 → **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main`、資料夾 `/ (root)` → Save**。
+2. 等一兩分鐘,同一頁上方會顯示網址。
 
-按 **Save**。
+**確認**:下面三個網址都打得開(不是 404),條款頁顯示的是對應的文件:
+- <https://beethoreven.github.io/mama-fufood-web/>
+- <https://beethoreven.github.io/mama-fufood-web/legal.html?doc=privacy>
+- <https://beethoreven.github.io/mama-fufood-web/legal.html?doc=terms>
 
-**B4. 權限範圍(Data Access)。** **Data Access → Add or remove scopes**:勾選 `openid`、`.../auth/userinfo.email`、`.../auth/userinfo.profile`;再在下方「Manually add scopes」貼上這兩行 → **Add to table**:
+**B4. 品牌(Branding)。** 左上選單 → **Google Auth Platform**。第一次進去會先跑「開始使用」(Get started)精靈:應用程式名稱填 `媽媽記副食品`、使用者支援電子郵件選你的 Email、目標對象選**外部**(External)、聯絡資訊填你的 Email、勾選同意 → **建立**。**已經跑過精靈就跳過這段**(左側有「品牌」「目標對象」「用戶端」「資料存取權」等選單就是跑過了)。
 
-```
-https://www.googleapis.com/auth/drive.appdata
-https://www.googleapis.com/auth/drive.file
-```
+接著點左側的 **品牌**,填下面這些欄位(沒提到的欄位維持原樣或留空):
 
-勾選它們 → **Update** → **Save**。這五個都是 Google 分類的「非敏感」範圍,所以不需要送審,使用者登入時也不會看到「這個應用程式未經驗證」的警告。
+| 區塊 | 欄位 | 值 |
+|---|---|---|
+| 應用程式資訊 | 應用程式名稱 | `媽媽記副食品`(精靈填過就不用改) |
+| 應用程式資訊 | 使用者支援電子郵件 | 你的 Email(精靈選過就不用改) |
+| 應用程式標誌 | 標誌 | **不要上傳**:外部、正式版的 App 一上傳標誌就要走 Google 的品牌驗證 |
+| 應用程式網域 | 應用程式首頁 | `https://beethoreven.github.io/mama-fufood-web/` |
+| 應用程式網域 | 應用程式隱私權政策連結 | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=privacy` |
+| 應用程式網域 | 應用程式服務條款連結 | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=terms` |
+| 授權網域 | 新增網域 | `beethoreven.github.io`(**不是** `github.io`;上面三個網址的網域都要先登記在這裡,否則儲存時會報錯) |
+| 開發人員聯絡資訊 | 電子郵件地址 | 你的 Email(精靈填過就不用改) |
 
-**B5. 發布成正式版(Audience)。** **Audience → Publishing status: Testing → Publish app → Confirm**,狀態變成 **In production**。原因:Testing 狀態下,名稱、Email、頭像以外的權限(這裡是雲端硬碟)授權 7 天就失效,等於每週都要重新授權一次,而且只有列在 Test users 的帳號登得進來。
+拉到最下面按 **儲存**。
 
+- 畫面上的欄位名稱和這張表略有不同時,意思對得上就可以。
+- 儲存後品牌頁上方如果出現「需要驗證網域擁有權」之類的提示:先不用處理,繼續做 B5、B6;B6 會說發布不了時怎麼辦。
+
+**B5. 資料存取權(Data Access)。** 左側 **資料存取權 → 新增或移除範圍**(Add or remove scopes):
+1. 在清單裡勾選 `openid`、`.../auth/userinfo.email`、`.../auth/userinfo.profile`。
+2. 在下方「手動新增範圍」(Manually add scopes)貼上這兩行 → **新增至表格**(Add to table):
+
+   ```
+   https://www.googleapis.com/auth/drive.appdata
+   https://www.googleapis.com/auth/drive.file
+   ```
+
+3. 確認這兩個也被勾選 → **更新**(Update)→ 回到資料存取權頁按 **儲存**。
+
+這五個都是 Google 分類的「非敏感」範圍,所以不需要送審,使用者登入時也不會看到「這個應用程式未經驗證」的警告。
+
+**B6. 目標對象:發布成正式版(Audience)。** 左側 **目標對象** → 「發布狀態」目前是**測試中**(Testing)→ **發布應用程式**(Publish app)→ **確認**,狀態變成**正式版**(In production)。
+
+為什麼要發布:測試中的狀態下,名稱、Email、頭像以外的權限(這裡是雲端硬碟)授權 7 天就失效,等於每週都要重新授權一次,而且只有列在「測試使用者」的帳號登得進來。
+
+- **「發布應用程式」按鈕是灰的**:品牌還沒填完。回 B4 檢查三個網址與授權網域都填了、而且 B3 的網站打得開。
+- **品牌都填完、網站也打得開,按鈕還是灰的**:2026 年 Google 開發者論壇上有好幾則一樣的回報,Google 沒有給官方解法([論壇文章 1](https://discuss.google.dev/t/cannot-publish-app-publish-app-button-disabled-branding-page-complete-pii-removed-by-staff/401276)、[論壇文章 2](https://discuss.google.dev/t/google-auth-platform-publish-app-disabled-for-external-testing-personal-use-oauth-app/402925))。這時改用替代做法:**維持測試中**,在 **目標對象 → 測試使用者 → 新增使用者**,加入會用到這個 App 的 Google 帳號。代價是雲端硬碟的授權每 7 天要在 App 裡重新同意一次(同步失敗時 App 會請你授權)。之後可以不定期回來試發布。
+- 按下發布時 Google 要求驗證網域或送審:**先不要送審**,一樣改用上面的替代做法。驗證 `beethoreven.github.io` 要在 Google Search Console 證明你擁有這個網域,GitHub Pages 的網域只能用「上傳 HTML 檔到網站根目錄」證明,而根目錄要另開一個名叫 `beethoreven.github.io` 的 repo,不在這份 SOP 的範圍。
 - 沒有品牌驗證時,同意畫面不會顯示 App 名稱(只顯示網域),不影響功能,不需要申請。
-- 如果按下發布時 Google 要求驗證網域或送審而卡住:先不要送審,改成維持 Testing,在 **Audience → Test users** 加入會用到這個 App 的 Google 帳號。代價是雲端硬碟的授權每 7 天要在 App 裡重新同意一次(同步失敗時 App 會請你授權)。
 
-**B6. 建立用戶端(Clients)。** **Clients → Create client**,現在先建兩個,第三個等 Part G:
+**B7. 建立用戶端(Clients)。** 左側 **用戶端 → 建立用戶端**(Create client),現在先建兩個,第三個等 Part G:
 
-1. **Web application**
-   - Name:`mama-fufood-web`(只是控制台裡的標籤)。
-   - Authorized JavaScript origins:`https://beethoreven.github.io`、`http://localhost:8003`(本機預覽用)。**只有網域**,不含 `/mama-fufood-web/` 路徑,**結尾不要斜線**。
-   - Authorized redirect URIs:不用填。
-   - **Create** 之後畫面會顯示 Client ID,**記下來**(之後在 Clients 列表也查得到)。
-2. **Android**(開發時用,除錯金鑰簽的版本)
-   - Package name:`tw.com.tutorarthur.mamafufood`
-   - SHA-1 certificate fingerprint:用下面的指令取得,複製 `SHA1:` 後面那一串:
+1. 應用程式類型選 **網頁應用程式**(Web application)
+   - 名稱:`mama-fufood-web`(只是控制台裡的標籤)。
+   - 已授權的 JavaScript 來源(Authorized JavaScript origins)→ **新增 URI**,加兩個:`https://beethoreven.github.io`、`http://localhost:8003`(本機預覽用)。**只有網域**,不含 `/mama-fufood-web/` 路徑,**結尾不要斜線**。
+   - 已授權的重新導向 URI:不用填。
+   - **建立**之後畫面會顯示用戶端 ID(Client ID),**記下來**(之後在用戶端列表也查得到)。
+2. 應用程式類型選 **Android**(開發時用,除錯金鑰簽的版本)
+   - 套件名稱(Package name):`tw.com.tutorarthur.mamafufood`
+   - SHA-1 憑證指紋(SHA-1 certificate fingerprint):用下面的指令取得,複製 `SHA1:` 後面那一串:
 
      ```bash
      "$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1
      ```
 
      (`~/.android/debug.keystore` 是第一次 `flutter run` 時自動產生的;找不到這個檔就先跑一次 `flutter run`。)
-   - **Create**。Android 用戶端的 Client ID 不用填到任何地方,Google 用套件名稱加 SHA-1 對應。
+   - **建立**。Android 用戶端的 ID 不用填到任何地方,Google 用套件名稱加 SHA-1 對應。
 
-**確認**:Clients 列表有一個 Web application、一個 Android;Branding 頁的 Authorized domains 有 `beethoreven.github.io`;Audience 顯示 In production(或你選了替代做法的 Testing 加 Test users)。
+**確認**:用戶端列表有一個網頁應用程式、一個 Android;品牌頁的授權網域有 `beethoreven.github.io`;目標對象顯示正式版(或你選了替代做法的測試中加測試使用者)。
 
 #### Part C. Neon 資料庫
 
@@ -288,7 +310,7 @@ https://www.googleapis.com/auth/drive.file
 | 名稱 | 值 |
 |---|---|
 | `DATABASE_URL` | C3 的 Neon 連線字串 |
-| `GOOGLE_CLIENT_ID` | B6 的 Web Client ID |
+| `GOOGLE_CLIENT_ID` | B7 的 Web Client ID |
 | `ALLOWED_ORIGINS` | `https://beethoreven.github.io`(**結尾不要斜線**,不含路徑) |
 | `FIRST_ADMIN_EMAIL` | 你要當第一位管理員的 Google 帳號 Email |
 | `SESSION_SECRET` | 一串亂數,在終端機執行 `python3 -c "import secrets; print(secrets.token_hex(32))"` 產生 |
@@ -334,12 +356,12 @@ Render 免費方案閒置 15 分鐘會休眠;每 10 分鐘打一次 `/health`,�
 
 ```js
 apiBase: "https://mama-fufood-backend.onrender.com",   // D7 的後端網址,結尾不要斜線
-googleClientId: "B6 的 Web Client ID",
+googleClientId: "B7 的 Web Client ID",
 ```
 
 然後 commit、push。
 
-**F2.** `mama-fufood-web` repo → **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main`、資料夾 `/ (root)` → Save**。一兩分鐘後,同一頁上方會顯示網站的網址。
+**F2.** GitHub Pages 已在 B3 開啟,這裡不用再做;F1 推送後一兩分鐘,網站就會換成新的設定。
 
 **F3. 確認:**
 1. 打開 `https://beethoreven.github.io/mama-fufood-web/` 看得到首頁;條款、政策、判斷邏輯說明三個按鈕都打得開。
@@ -350,7 +372,7 @@ googleClientId: "B6 的 Web Client ID",
 
 **常見問題:**
 - 首頁沒有登入按鈕:`googleClientId` 是空的,或瀏覽器的擋廣告外掛擋掉了 Google 的登入元件(頁面會顯示原因)。
-- Google 的登入視窗顯示來源不符(origin mismatch):B6 的 JavaScript 來源少了 `https://beethoreven.github.io`,或多了路徑、結尾斜線。
+- Google 的登入視窗顯示來源不符(origin mismatch):B7 的 JavaScript 來源少了 `https://beethoreven.github.io`,或多了路徑、結尾斜線。
 - 登入後顯示「連不上後端」:後端在喚醒,等一分鐘再試;一直不行就檢查 `apiBase`。
 - 瀏覽器的開發者工具出現 CORS 錯誤:Render 的 `ALLOWED_ORIGINS` 不是剛好 `https://beethoreven.github.io`。
 
@@ -401,7 +423,7 @@ storeFile=/Users/<你的帳號>/Keys/mama-fufood/upload-keystore.jks
 ```json
 {
   "MFF_API_BASE": "https://mama-fufood-backend.onrender.com",
-  "MFF_WEB_CLIENT_ID": "B6 的 Web Client ID"
+  "MFF_WEB_CLIENT_ID": "B7 的 Web Client ID"
 }
 ```
 
@@ -461,7 +483,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 
 ### 已知限制
 
-- **這份上線 SOP 還沒有照著完整跑過一次**;實際做的時候遇到和這裡不一樣的畫面或錯誤,要回來修正這份文件。Google 同意畫面在發布時會不會要求驗證網域,事先無法確認,所以 B5 寫了替代做法。
+- **這份上線 SOP 還沒有照著完整跑過一次**;實際做的時候遇到和這裡不一樣的畫面或錯誤,要回來修正這份文件。Google 同意畫面在發布時會不會要求驗證網域,事先無法確認,所以 B6 寫了替代做法。
 - 還沒有上架到 Google Play:上架需要的商店素材、封閉測試、Data safety 等都還沒做。
 - Android 的開發者驗證:Google 從 2026-09-30 起在部分國家要求 App 的開發者向 Google 登記才能安裝,2027 年起擴大到全球;用 `adb` 安裝仍然可以。台灣的實施時間要再確認。
 - Neon 免費方案的額度:方案頁有「每月 100 CU-hours」與「50」兩種寫法,建立前再確認一次。
@@ -542,8 +564,8 @@ Follow Part 0 and Parts A–J in order. You sign in to and configure every exter
 | Value | Created in step | Goes into | Secret |
 |---|---|---|---|
 | Website URL `https://beethoreven.github.io/mama-fufood-web/` | Known in advance (set by the repo name) | Google consent screen links; origins only take `https://beethoreven.github.io` | |
-| Web Client ID (`….apps.googleusercontent.com`) | B6 | Render's `GOOGLE_CLIENT_ID`, the website's `js/config.js`, the app's `env/prod.json` | |
-| SHA-1 of the debug key | B6 | The Google Cloud Android client (development) | |
+| Web Client ID (`….apps.googleusercontent.com`) | B7 | Render's `GOOGLE_CLIENT_ID`, the website's `js/config.js`, the app's `env/prod.json` | |
+| SHA-1 of the debug key | B7 | The Google Cloud Android client (development) | |
 | Neon connection string | C3 | Render's `DATABASE_URL` | **Secret** |
 | `SESSION_SECRET` | D5 | Render | **Secret** |
 | Backend URL (`https://….onrender.com`) | D7 | The website's `js/config.js`, the app's `env/prod.json`, cron-job.org | |
@@ -653,52 +675,74 @@ The meta repo records the submodules' commits; pushing it first would point at c
 
 #### Part B. Google Cloud (Sign-In and Drive)
 
-**B1. Create the project.** Open <https://console.cloud.google.com/> → the project picker at the top → **New Project** → Project name `mama-fufood` (leave Location as "No organization") → **Create**. Once created, make sure the project picker at the top shows `mama-fufood`; every following step happens inside this project. No billing account is needed.
+This Part follows the **Traditional Chinese console UI**; the English UI labels are given alongside.
 
-**B2. Enable the Google Drive API.** Top-left menu → **APIs & Services → Library** → search "Google Drive API" → open it → **Enable**.
+**B1. Create the project.** Open <https://console.cloud.google.com/> → the project picker at the top → **New Project** (新增專案) → Project name `mama-fufood` (leave Location as "No organization") → **Create**. Once created, make sure the project picker at the top shows `mama-fufood`; every following step happens inside this project. No billing account is needed.
 
-**B3. Consent screen basics (Branding).** Top-left menu → **Google Auth Platform**. The first visit shows a **Get started** wizard:
-1. App Information: App name `媽媽記副食品`; User support email: your email.
-2. Audience: **External**.
-3. Contact Information: your email.
-4. Tick agreement to the Google API Services User Data Policy → **Create**.
+**B2. Enable the Google Drive API.** Top-left menu → **APIs & Services → Library** (API 和服務 → 程式庫) → search "Google Drive API" → open it → **Enable**.
 
-Afterwards, fill in the following on the **Branding** page (leave every field not mentioned here empty):
+**B3. Put the website online first (GitHub Pages).** Branding in B4 asks for the website's home page, privacy policy and terms of service URLs, and Google actually opens them; while the site is offline (404) Branding can't be completed and B6's "Publish app" button stays greyed out. The home page and legal pages are static files that open without the backend, so the site can go online now.
 
-| Field | Value |
-|---|---|
-| App logo | **Don't upload one**: for an external app in production, uploading a logo triggers Google's verification process |
-| Application home page | `https://beethoreven.github.io/mama-fufood-web/` |
-| Application privacy policy link | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=privacy` |
-| Application terms of service link | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=terms` |
-| Authorized domains | `beethoreven.github.io` (**not** `github.io`; every domain in use must be registered here first) |
+1. Open the `mama-fufood-web` GitHub page → **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main`, folder `/ (root)` → Save**.
+2. Wait a minute or two; the URL appears at the top of the same page.
 
-Press **Save**.
+**Check**: all three URLs open (not 404), and the legal page shows the matching document:
+- <https://beethoreven.github.io/mama-fufood-web/>
+- <https://beethoreven.github.io/mama-fufood-web/legal.html?doc=privacy>
+- <https://beethoreven.github.io/mama-fufood-web/legal.html?doc=terms>
 
-**B4. Scopes (Data Access).** **Data Access → Add or remove scopes**: tick `openid`, `.../auth/userinfo.email` and `.../auth/userinfo.profile`; then paste these two lines into "Manually add scopes" at the bottom → **Add to table**:
+**B4. Branding.** Top-left menu → **Google Auth Platform**. The first visit runs a **Get started** (開始使用) wizard: App name `媽媽記副食品`, User support email: your email, Audience: **External** (外部), Contact information: your email, tick the agreement → **Create**. **Skip this if you've already run the wizard** (if the left side shows Branding, Audience, Clients, Data Access and so on, you have).
 
-```
-https://www.googleapis.com/auth/drive.appdata
-https://www.googleapis.com/auth/drive.file
-```
+Then click **Branding** (品牌) on the left and fill in these fields (leave fields not mentioned as they are or empty):
 
-Tick them → **Update** → **Save**. All five are classified by Google as "non-sensitive", so no review is needed and users won't see the "this app isn't verified" warning when signing in.
+| Section | Field | Value |
+|---|---|---|
+| App information | App name | `媽媽記副食品` (no change if the wizard set it) |
+| App information | User support email | Your email (no change if the wizard set it) |
+| App logo | Logo | **Don't upload one**: for an external app in production, uploading a logo triggers Google's brand verification |
+| App domain | Application home page | `https://beethoreven.github.io/mama-fufood-web/` |
+| App domain | Application privacy policy link | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=privacy` |
+| App domain | Application terms of service link | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=terms` |
+| Authorized domains | Add domain | `beethoreven.github.io` (**not** `github.io`; the domain of the three URLs above must be registered here first, or saving fails) |
+| Developer contact information | Email addresses | Your email (no change if the wizard set it) |
 
-**B5. Publish to production (Audience).** **Audience → Publishing status: Testing → Publish app → Confirm**; the status becomes **In production**. Why: in Testing status, grants for anything beyond name, email and profile picture (here: Drive) expire after 7 days — re-authorizing every week — and only accounts listed under Test users can sign in.
+Scroll to the bottom and press **Save** (儲存).
 
+- If the field names on your screen differ slightly from this table, go by the meaning.
+- If, after saving, the Branding page shows a notice like "domain ownership verification required": leave it for now and carry on with B5 and B6; B6 explains what to do if publishing doesn't work.
+
+**B5. Data Access.** Left side **Data Access → Add or remove scopes** (資料存取權 → 新增或移除範圍):
+1. Tick `openid`, `.../auth/userinfo.email` and `.../auth/userinfo.profile` in the list.
+2. Paste these two lines into "Manually add scopes" (手動新增範圍) at the bottom → **Add to table** (新增至表格):
+
+   ```
+   https://www.googleapis.com/auth/drive.appdata
+   https://www.googleapis.com/auth/drive.file
+   ```
+
+3. Make sure these two are ticked too → **Update** (更新) → back on the Data Access page, press **Save**.
+
+All five are classified by Google as "non-sensitive", so no review is needed and users won't see the "this app isn't verified" warning when signing in.
+
+**B6. Audience: publish to production.** Left side **Audience** (目標對象) → "Publishing status" currently reads **Testing** (測試中) → **Publish app** (發布應用程式) → **Confirm**; the status becomes **In production** (正式版).
+
+Why publish: in Testing status, grants for anything beyond name, email and profile picture (here: Drive) expire after 7 days — re-authorizing every week — and only accounts listed under Test users can sign in.
+
+- **The "Publish app" button is greyed out**: Branding isn't complete. Go back to B4 and check that the three URLs and the authorized domain are filled in, and that the B3 site opens.
+- **Branding is complete and the site opens, but the button is still greyed out**: several identical reports were posted on Google's developer forum in 2026, with no official fix from Google ([thread 1](https://discuss.google.dev/t/cannot-publish-app-publish-app-button-disabled-branding-page-complete-pii-removed-by-staff/401276), [thread 2](https://discuss.google.dev/t/google-auth-platform-publish-app-disabled-for-external-testing-personal-use-oauth-app/402925)). Use the fallback: **stay in Testing** and under **Audience → Test users → Add users**, add the Google accounts that will use the app. The cost is that the Drive grant has to be re-approved in the app every 7 days (the app asks for it when sync fails). You can come back and retry publishing now and then.
+- If publishing asks for domain verification or a review: **don't submit a review**; use the same fallback. Verifying `beethoreven.github.io` means proving ownership of that domain in Google Search Console, and for a GitHub Pages domain that can only be done by uploading an HTML file to the site root, which needs a separate repo named `beethoreven.github.io` — outside the scope of this guide.
 - Without brand verification the consent screen doesn't show the app name (only the domain); this doesn't affect functionality and doesn't need to be applied for.
-- If publishing gets stuck because Google asks for domain verification or a review: don't submit anything; stay in Testing instead and add the Google accounts that will use the app under **Audience → Test users**. The cost is that the Drive grant has to be re-approved in the app every 7 days (the app asks for it when sync fails).
 
-**B6. Create the clients (Clients).** **Clients → Create client**; create two now and the third in Part G:
+**B7. Create the clients.** Left side **Clients → Create client** (用戶端 → 建立用戶端); create two now and the third in Part G:
 
-1. **Web application**
+1. Application type **Web application** (網頁應用程式)
    - Name: `mama-fufood-web` (just a label in the console).
-   - Authorized JavaScript origins: `https://beethoreven.github.io`, `http://localhost:8003` (for local preview). **Domain only**, without the `/mama-fufood-web/` path, **no trailing slash**.
+   - Authorized JavaScript origins (已授權的 JavaScript 來源) → **Add URI**, add two: `https://beethoreven.github.io`, `http://localhost:8003` (for local preview). **Domain only**, without the `/mama-fufood-web/` path, **no trailing slash**.
    - Authorized redirect URIs: leave empty.
    - After **Create**, the Client ID is shown — **write it down** (it can also be found in the Clients list later).
-2. **Android** (for development, builds signed with the debug key)
-   - Package name: `tw.com.tutorarthur.mamafufood`
-   - SHA-1 certificate fingerprint: get it with the command below and copy the string after `SHA1:`:
+2. Application type **Android** (for development, builds signed with the debug key)
+   - Package name (套件名稱): `tw.com.tutorarthur.mamafufood`
+   - SHA-1 certificate fingerprint (SHA-1 憑證指紋): get it with the command below and copy the string after `SHA1:`:
 
      ```bash
      "$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1
@@ -707,7 +751,7 @@ Tick them → **Update** → **Save**. All five are classified by Google as "non
      (`~/.android/debug.keystore` is created automatically by the first `flutter run`; if the file doesn't exist, run `flutter run` once first.)
    - **Create**. The Android client's ID isn't entered anywhere — Google matches it by package name plus SHA-1.
 
-**Check**: the Clients list has one Web application and one Android client; the Branding page's Authorized domains include `beethoreven.github.io`; Audience shows In production (or Testing plus Test users if you took the fallback).
+**Check**: the Clients list has one Web application and one Android client; the Branding page's authorized domains include `beethoreven.github.io`; Audience shows In production (or Testing plus Test users if you took the fallback).
 
 #### Part C. Neon Database
 
@@ -756,7 +800,7 @@ Keep everything else at the defaults → **Create project**.
 | Name | Value |
 |---|---|
 | `DATABASE_URL` | The Neon connection string from C3 |
-| `GOOGLE_CLIENT_ID` | The Web Client ID from B6 |
+| `GOOGLE_CLIENT_ID` | The Web Client ID from B7 |
 | `ALLOWED_ORIGINS` | `https://beethoreven.github.io` (**no trailing slash**, no path) |
 | `FIRST_ADMIN_EMAIL` | The Google account email of the first admin |
 | `SESSION_SECRET` | A random string: generate it in the terminal with `python3 -c "import secrets; print(secrets.token_hex(32))"` |
@@ -802,12 +846,12 @@ Render's free tier sleeps after 15 minutes idle; hitting `/health` every 10 minu
 
 ```js
 apiBase: "https://mama-fufood-backend.onrender.com",   // the backend URL from D7, no trailing slash
-googleClientId: "the Web Client ID from B6",
+googleClientId: "the Web Client ID from B7",
 ```
 
 Then commit and push.
 
-**F2.** In the `mama-fufood-web` repo: **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main`, folder `/ (root)` → Save**. A minute or two later, the site URL appears at the top of the same page.
+**F2.** GitHub Pages was already turned on in B3, so nothing to do here; a minute or two after F1 is pushed, the site picks up the new settings.
 
 **F3. Check:**
 1. `https://beethoreven.github.io/mama-fufood-web/` shows the home page; the terms, privacy policy and judgement-logic guide buttons all open.
@@ -818,7 +862,7 @@ Then commit and push.
 
 **Common problems:**
 - No sign-in button on the home page: `googleClientId` is empty, or an ad-blocking extension blocked Google's sign-in script (the page says so).
-- Google's sign-in window reports an origin mismatch: B6's JavaScript origins are missing `https://beethoreven.github.io`, or have a path or trailing slash added.
+- Google's sign-in window reports an origin mismatch: B7's JavaScript origins are missing `https://beethoreven.github.io`, or have a path or trailing slash added.
 - "連不上後端" (can't reach the backend) after signing in: the backend is waking up — wait a minute and retry; if it never works, check `apiBase`.
 - A CORS error in the browser's developer tools: Render's `ALLOWED_ORIGINS` isn't exactly `https://beethoreven.github.io`.
 
@@ -869,7 +913,7 @@ storeFile=/Users/<your account>/Keys/mama-fufood/upload-keystore.jks
 ```json
 {
   "MFF_API_BASE": "https://mama-fufood-backend.onrender.com",
-  "MFF_WEB_CLIENT_ID": "the Web Client ID from B6"
+  "MFF_WEB_CLIENT_ID": "the Web Client ID from B7"
 }
 ```
 
@@ -929,7 +973,7 @@ If any step doesn't match, send feedback from the app with "遇到問題" (ran i
 
 ### Known Limitations
 
-- **This Setup Guide has not been run end to end yet**; if the real screens or errors differ from what's written here, come back and fix this document. Whether Google's consent screen asks for domain verification when publishing can't be confirmed in advance, which is why B5 includes a fallback.
+- **This Setup Guide has not been run end to end yet**; if the real screens or errors differ from what's written here, come back and fix this document. Whether Google's consent screen asks for domain verification when publishing can't be confirmed in advance, which is why B6 includes a fallback.
 - Not listed on Google Play yet: the store assets, closed testing, Data safety form and so on needed for listing haven't been done.
 - Android developer verification: from 2026-09-30 Google requires app developers to register with Google before their apps can be installed in some countries, expanding worldwide from 2027; installing with `adb` still works. When it takes effect in Taiwan still needs checking.
 - Neon free-plan quota: the plans page says both "100 CU-hours per month" and "50" in different places — double-check before creating the project.
