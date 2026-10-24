@@ -411,9 +411,15 @@ storeFile=/Users/<你的帳號>/Keys/mama-fufood/upload-keystore.jks
 
 (用這個指令建立的金鑰,金鑰密碼和金鑰庫密碼是同一組。)
 
-**G3.** 備份 `upload-keystore.jks` 與密碼到電腦以外的地方。
+**G3. 備份。** 金鑰建好之後只存在這台電腦的 `~/Keys/mama-fufood/upload-keystore.jks`;密碼另外以明文寫在 G2 的 `key.properties`(只在這台電腦、不進 git)。電腦壞掉或遺失,金鑰就沒了,所以要備份到電腦以外的地方:
 
-**G4.** 取得這把金鑰的 SHA-1,回到 Google Cloud 的 **Clients → Create client → Android**,建立第三個用戶端(Package name 一樣是 `tw.com.tutorarthur.mamafufood`):
+- **金鑰檔**:複製一份到雲端硬碟(Google 雲端硬碟、iCloud、OneDrive 都可以),或隨身碟。
+- **密碼**:放進密碼管理器,**不要和金鑰檔放在同一個地方**。只拿到金鑰檔、沒有密碼,是沒辦法拿來簽 App 的;兩樣分開放,其中一邊外洩也還安全。
+- 備份好之後,從雲端下載一次回來,用 G4 的指令加上 `-keystore <下載的檔案>` 跑一次,能印出同一個 SHA-1 就代表備份是好的。
+
+為什麼要備份:App 還沒上架時,手機上的 App 只認這一把金鑰。金鑰不見了,新版就裝不上去,只能先解除安裝(手機上的資料會不見,除非先匯出或開了雲端同步)。上架 Google Play 之後,Google 會另外保管正式的簽署金鑰,這一把只是「上傳金鑰」,遺失時可以向 Google 申請重設。
+
+**G4.** 取得這把金鑰的 SHA-1,回到 Google Auth Platform 的 **用戶端 → 建立用戶端 → 應用程式類型選 Android**(Clients → Create client → Android),建立第三個用戶端(套件名稱一樣是 `tw.com.tutorarthur.mamafufood`):
 
 ```bash
 KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
@@ -907,7 +913,13 @@ storeFile=/Users/<your account>/Keys/mama-fufood/upload-keystore.jks
 
 (With a key created by this command, the key password and the keystore password are the same.)
 
-**G3.** Back up `upload-keystore.jks` and the password somewhere other than this computer.
+**G3. Back up.** Once created, the key exists only on this computer at `~/Keys/mama-fufood/upload-keystore.jks`; the password is also written in plain text in G2's `key.properties` (on this computer only, never in git). If the computer breaks or is lost, the key is gone, so back it up somewhere off this computer:
+
+- **The key file**: copy it to cloud storage (Google Drive, iCloud, OneDrive are all fine) or a USB drive.
+- **The password**: keep it in a password manager, **not in the same place as the key file**. The key file without the password can't be used to sign the app; keeping them apart means one of them leaking is still safe.
+- After backing up, download the copy once and run G4's command with `-keystore <the downloaded file>`; if it prints the same SHA-1, the backup is good.
+
+Why back up: until the app is on the store, the installed app only accepts this key. Lose it and new versions can't be installed — only uninstalling works (which deletes the phone's data, unless it was exported or cloud sync was on). Once on Google Play, Google keeps the actual signing key and this one is only the "upload key", which can be reset by asking Google if lost.
 
 **G4.** Get this key's SHA-1 and go back to Google Cloud: **Clients → Create client → Android** to create the third client (the package name is again `tw.com.tutorarthur.mamafufood`):
 
