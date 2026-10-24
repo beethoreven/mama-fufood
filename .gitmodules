@@ -1,0 +1,9 @@
+[submodule "mama-fufood-app"]
+	path = mama-fufood-app
+	url = https://github.com/beethoreven/mama-fufood-app.git
+[submodule "mama-fufood-backend"]
+	path = mama-fufood-backend
+	url = https://github.com/beethoreven/mama-fufood-backend.git
+[submodule "mama-fufood-web"]
+	path = mama-fufood-web
+	url = https://github.com/beethoreven/mama-fufood-web.git
