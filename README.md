@@ -85,7 +85,7 @@ git commit -m "Update mama-fufood-backend submodule pointer"
 **3. 本機工具**
 
 - Flutter 與 Android Studio:照 `mama-fufood-app` README 的 Part A 裝好。
-- **`keytool` 要用 Android Studio 內附的那一支。** macOS 內建的 `keytool` 沒有 Java 可以跑,會出現「Unable to locate a Java Runtime」;而且在中文環境下,`keytool -list -v` 會因為中文訊息的格式錯誤直接當掉(`IllegalFormatConversionException`),所以每次都加 `-J-Duser.language=en` 改用英文訊息。先在終端機設一個變數(只在這個終端機視窗有效,關掉要重設):
+- **`keytool` 要用 Android Studio 內附的那一支。** macOS 內建的 `keytool` 沒有 Java 可以跑,會出現「Unable to locate a Java Runtime」;而且在中文環境下,`keytool -list -v` 會因為中文訊息的格式錯誤直接當掉(`IllegalFormatConversionException`),所以每次都加 `-J-Duser.language=en` 改用英文訊息。先在終端機設一個變數,確認這支 keytool 能用(變數只在這個終端機視窗有效;後面用到 keytool 的指令區塊,第一行都會再設一次,換了終端機視窗也能直接整段貼上):
 
   ```bash
   export KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
@@ -255,6 +255,7 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
    - SHA-1 憑證指紋(SHA-1 certificate fingerprint):用下面的指令取得,複製 `SHA1:` 後面那一串:
 
      ```bash
+     KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
      "$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1
      ```
 
@@ -384,6 +385,7 @@ googleClientId: "B7 的 Web Client ID",
 
 ```bash
 mkdir -p ~/Keys/mama-fufood
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
 "$KEYTOOL" -J-Duser.language=en -genkeypair -v -keystore ~/Keys/mama-fufood/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
 ```
 
@@ -411,6 +413,7 @@ storeFile=/Users/<你的帳號>/Keys/mama-fufood/upload-keystore.jks
 **G4.** 取得這把金鑰的 SHA-1,回到 Google Cloud 的 **Clients → Create client → Android**,建立第三個用戶端(Package name 一樣是 `tw.com.tutorarthur.mamafufood`):
 
 ```bash
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
 "$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/Keys/mama-fufood/upload-keystore.jks -alias upload | grep SHA1
 ```
 
@@ -575,7 +578,7 @@ Follow Part 0 and Parts A–J in order. You sign in to and configure every exter
 **3. Local tools**
 
 - Flutter and Android Studio: install them per Part A of the `mama-fufood-app` README.
-- **Use the `keytool` bundled with Android Studio.** macOS's built-in `keytool` has no Java to run on and fails with "Unable to locate a Java Runtime"; and in a Chinese-language environment, `keytool -list -v` crashes on a formatting bug in its Chinese messages (`IllegalFormatConversionException`), so always add `-J-Duser.language=en` to switch it to English messages. Set a variable in the terminal first (it only lasts for this terminal window; set it again after closing it):
+- **Use the `keytool` bundled with Android Studio.** macOS's built-in `keytool` has no Java to run on and fails with "Unable to locate a Java Runtime"; and in a Chinese-language environment, `keytool -list -v` crashes on a formatting bug in its Chinese messages (`IllegalFormatConversionException`), so always add `-J-Duser.language=en` to switch it to English messages. Set a variable in the terminal first and confirm this keytool works (the variable only lasts for this terminal window; every later command block that uses keytool sets it again on its first line, so it can be pasted as a whole even in a new terminal window):
 
   ```bash
   export KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
@@ -745,6 +748,7 @@ Why publish: in Testing status, grants for anything beyond name, email and profi
    - SHA-1 certificate fingerprint (SHA-1 憑證指紋): get it with the command below and copy the string after `SHA1:`:
 
      ```bash
+     KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
      "$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1
      ```
 
@@ -874,6 +878,7 @@ Then commit and push.
 
 ```bash
 mkdir -p ~/Keys/mama-fufood
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
 "$KEYTOOL" -J-Duser.language=en -genkeypair -v -keystore ~/Keys/mama-fufood/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
 ```
 
@@ -901,6 +906,7 @@ storeFile=/Users/<your account>/Keys/mama-fufood/upload-keystore.jks
 **G4.** Get this key's SHA-1 and go back to Google Cloud: **Clients → Create client → Android** to create the third client (the package name is again `tw.com.tutorarthur.mamafufood`):
 
 ```bash
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
 "$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/Keys/mama-fufood/upload-keystore.jks -alias upload | grep SHA1
 ```
 
