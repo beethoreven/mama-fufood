@@ -329,7 +329,7 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 
 **常見問題:**
 - 部署記錄說找不到 Python 3.15.1:Render 還沒有這一版。把 `.python-version` 改成 Render 有的最新版、在旁邊寫下原因,推上去重新部署。
-- `/ready` 一直是 503、`database_last_ok` 一直是 `null`:`DATABASE_URL` 貼錯(多了空白、少了 `sslmode=require`),或 Neon 專案被暫停。
+- `/ready` 一直是 503、`database_last_ok` 一直是 `null`:先看 `/ready` 的 `database_configured`,`false` 就是 Render 沒讀到 `DATABASE_URL`;`true` 就到 Render 的 **Logs** 找「公用資料快取」:每 30 秒一行「載入失敗」代表 `DATABASE_URL` 貼錯(多了空白、少了 `sslmode=require`)或 Neon 專案被暫停;連「開始在背景載入」都沒有,代表部署的還是舊版後端,確認最新的提交有部署上去。
 
 #### Part E. cron-job.org(保活)
 
@@ -825,7 +825,7 @@ Keep everything else at the defaults → **Create project**.
 
 **Common problems:**
 - The deploy log says Python 3.15.1 can't be found: Render doesn't offer that version yet. Change `.python-version` to the newest version Render has, note the reason next to it, and push to redeploy.
-- `/ready` stays at 503 and `database_last_ok` stays `null`: `DATABASE_URL` was pasted wrong (extra spaces, missing `sslmode=require`), or the Neon project is suspended.
+- `/ready` stays at 503 and `database_last_ok` stays `null`: first look at `database_configured` in `/ready` — `false` means Render isn't reading `DATABASE_URL`; if it's `true`, search Render's **Logs** for the public-data cache lines (公用資料快取): a load-failure line every 30 seconds means `DATABASE_URL` was pasted wrong (extra spaces, missing `sslmode=require`) or the Neon project is suspended; no "started loading in the background" line (開始在背景載入) at all means an older backend is still deployed — make sure the latest commit has been deployed.
 
 #### Part E. cron-job.org (Keep-Alive)
 
