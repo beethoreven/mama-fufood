@@ -400,13 +400,19 @@ KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool
 | What is your first and last name? 以及 organizational unit、organization、City、State、country code | ★ 這些會寫進 App 安裝檔的憑證裡,**任何人拿到 APK 都讀得到**。不想公開就直接按 Enter 留空 |
 | Is CN=…, correct? | 輸入 `yes` |
 
-**G2.** 在 `mama-fufood-app/android/` 建立 `key.properties`(已經在 `.gitignore` 裡)。`storeFile` 要寫完整路徑,`~` 不會被展開:
+**G2.** 建立 `mama-fufood-app/android/key.properties`(注意是 `android` 資料夾裡,不是 `mama-fufood-app/` 底下;已經在 `.gitignore` 裡)。`storeFile` 要寫完整路徑,`~` 不會被展開:
 
 ```properties
 storePassword=你剛剛訂的密碼
 keyPassword=你剛剛訂的密碼
 keyAlias=upload
 storeFile=/Users/<你的帳號>/Keys/mama-fufood/upload-keystore.jks
+```
+
+`<你的帳號>` 是這台 Mac 的使用者名稱(家目錄的資料夾名稱),不是 Google 或 GitHub 帳號。不確定的話,在終端機跑下面這行,印出來的整串就是 `storeFile` 要填的值:
+
+```bash
+echo ~/Keys/mama-fufood/upload-keystore.jks
 ```
 
 (用這個指令建立的金鑰,金鑰密碼和金鑰庫密碼是同一組。)
@@ -902,13 +908,19 @@ The command asks one question at a time:
 | What is your first and last name? plus organizational unit, organization, City, State, country code | ★ These are written into the certificate inside the app's APK, so **anyone holding the APK can read them**. To keep them private, just press Enter to leave them empty |
 | Is CN=…, correct? | Type `yes` |
 
-**G2.** Create `key.properties` in `mama-fufood-app/android/` (already in `.gitignore`). `storeFile` must be a full path — `~` is not expanded:
+**G2.** Create `mama-fufood-app/android/key.properties` (inside the `android` folder, not directly under `mama-fufood-app/`; already in `.gitignore`). `storeFile` must be a full path — `~` is not expanded:
 
 ```properties
 storePassword=the password you just chose
 keyPassword=the password you just chose
 keyAlias=upload
 storeFile=/Users/<your account>/Keys/mama-fufood/upload-keystore.jks
+```
+
+`<your account>` is this Mac's user name (the name of your home folder), not a Google or GitHub account. If unsure, run the line below in Terminal; the whole string it prints is the value for `storeFile`:
+
+```bash
+echo ~/Keys/mama-fufood/upload-keystore.jks
 ```
 
 (With a key created by this command, the key password and the keystore password are the same.)
