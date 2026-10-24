@@ -289,9 +289,12 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 
 **D1.** 打開 <https://dashboard.render.com/>,用 GitHub 帳號登入。
 
-**D2. 建立新的 workspace。** 左上的 workspace 選單 → **New workspace** → 名稱例如 `mama-fufood`,方案選免費的。免費方案每月 750 小時是**整個 workspace 共用**的,這個專案獨立一個,才不會和其他專案搶(一個服務 24 小時開著,一個月約 744 小時)。
+**D2. 選 workspace。** 免費方案每月 750 小時是**整個 workspace 共用**的,用完之後,這個 workspace 裡**所有**免費服務都會停到下個月初([Render 說明](https://render.com/docs/free))。這個後端有保活、24 小時開著,一個月約 744 小時,幾乎用掉全部額度,所以同一個 workspace 裡不能有其他也要醒著的免費服務。
 
-**D3. 建立 Web Service。** 確認左上是新的 workspace → **New → Web Service** → Git Provider 選 **GitHub**。第一次會請你授權 Render 讀 GitHub:建議選 **Only select repositories**,勾 `mama-fufood-backend` → 回到 Render,選 `mama-fufood-backend`。
+- 可以開新的 workspace:左上的 workspace 選單 → **New workspace** → 名稱例如 `mama-fufood`,方案選免費的。
+- 開不了新的(或不想開),就用既有的 workspace:先把裡面其他的免費服務停掉(服務頁 → **Settings** → 最下面的 **Suspend Web Service**,之後要用再按 **Resume**),它們的保活也一起關掉。只是拿掉保活、不停用的話,服務每被叫醒一次至少會醒著 15 分鐘,大月只剩 6 小時可用,用完會連這個後端一起停。
+
+**D3. 建立 Web Service。** 確認左上是 D2 選的 workspace → **New → Web Service** → Git Provider 選 **GitHub**。第一次會請你授權 Render 讀 GitHub:建議選 **Only select repositories**,勾 `mama-fufood-backend` → 回到 Render,選 `mama-fufood-backend`。列表裡沒有 `mama-fufood-backend`(這個 workspace 以前授權過、當時只勾了別的 repo):在列表下方按 **Configure GitHub**(或到 GitHub 的 **Settings → Applications → Render → Configure**),把 `mama-fufood-backend` 加進去再回來。
 
 **D4. 設定:**
 
@@ -782,9 +785,12 @@ Keep everything else at the defaults → **Create project**.
 
 **D1.** Open <https://dashboard.render.com/> and sign in with GitHub.
 
-**D2. Create a new workspace.** The workspace menu at the top left → **New workspace** → name it e.g. `mama-fufood`, on the free plan. The free 750 hours per month are **shared across the whole workspace**, so this project gets its own to avoid competing with other projects (one service running around the clock uses about 744 hours a month).
+**D2. Choose a workspace.** The free 750 hours per month are **shared across the whole workspace**, and once they run out, **every** free service in that workspace is suspended until the start of the next month ([Render docs](https://render.com/docs/free)). This backend is kept awake around the clock and uses about 744 hours a month — nearly the whole allowance — so the same workspace can't hold any other free service that also needs to stay awake.
 
-**D3. Create the Web Service.** Make sure the new workspace is selected at the top left → **New → Web Service** → Git Provider **GitHub**. The first time, Render asks for access to GitHub: preferably choose **Only select repositories** and tick `mama-fufood-backend` → back in Render, pick `mama-fufood-backend`.
+- If you can create a new workspace: the workspace menu at the top left → **New workspace** → name it e.g. `mama-fufood`, on the free plan.
+- If you can't (or don't want to), use an existing workspace: first suspend its other free services (the service page → **Settings** → **Suspend Web Service** at the bottom; press **Resume** when you need it again) and turn off their keep-alives too. Removing the keep-alive without suspending isn't enough: each wake-up keeps a service up for at least 15 minutes, a 31-day month leaves only 6 hours, and running out suspends this backend as well.
+
+**D3. Create the Web Service.** Make sure the workspace chosen in D2 is selected at the top left → **New → Web Service** → Git Provider **GitHub**. The first time, Render asks for access to GitHub: preferably choose **Only select repositories** and tick `mama-fufood-backend` → back in Render, pick `mama-fufood-backend`. If `mama-fufood-backend` isn't in the list (this workspace was authorized before with only other repos ticked): press **Configure GitHub** below the list (or on GitHub, **Settings → Applications → Render → Configure**), add `mama-fufood-backend`, then come back.
 
 **D4. Settings:**
 
