@@ -452,7 +452,7 @@ cd mama-fufood-app
 flutter build apk --release --dart-define-from-file=env/prod.json
 ```
 
-產出 `build/app/outputs/flutter-apk/app-release.apk`(約 76 MB)。沒有 `key.properties` 時會直接停下來並說明原因(避免不小心用除錯金鑰簽)。
+產出 `build/app/outputs/flutter-apk/app-release.apk`(約 76 MB),同一個資料夾還會有一份檔名帶版本號的 `mama-fufood-<版本>.apk`(例如 `mama-fufood-1.1.0.apk`),內容一樣,要留存或傳給別人時用這份。下面的安裝指令用 `app-release.apk`,它永遠是最新打包的那一版。沒有 `key.properties` 時會直接停下來並說明原因(避免不小心用除錯金鑰簽)。
 
 **H3. 手機打開 USB 偵錯**(Samsung 的路徑;其他廠牌名稱略有不同):**設定 → 關於手機 → 軟體資訊 → 連點「版本號碼」7 次**(會要求輸入手機的解鎖密碼)→ 回到設定,最下面多了「**開發人員選項**」→ 打開「**USB 偵錯**」。
 
@@ -961,7 +961,7 @@ cd mama-fufood-app
 flutter build apk --release --dart-define-from-file=env/prod.json
 ```
 
-The output is `build/app/outputs/flutter-apk/app-release.apk` (about 76 MB). Without `key.properties` the build stops and explains why (so it can't accidentally be signed with the debug key).
+The output is `build/app/outputs/flutter-apk/app-release.apk` (about 76 MB). The same folder also gets an identical copy whose name carries the version, `mama-fufood-<version>.apk` (for example `mama-fufood-1.1.0.apk`); use that one when keeping or sending a build. The install command below uses `app-release.apk`, which is always the latest build. Without `key.properties` the build stops and explains why (so it can't accidentally be signed with the debug key).
 
 **H3. Turn on USB debugging on the phone** (Samsung's path; other brands name things slightly differently): **Settings → About phone → Software information → tap "Build number" 7 times** (it asks for the phone's unlock code) → back in Settings, "**Developer options**" now appears at the bottom → turn on "**USB debugging**".
 
