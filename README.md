@@ -490,6 +490,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 | 第一次打開 | 深色的啟動畫面(只有圖示)→ 資料運用原則,捲到最下面才能按「我了解了」→ 輸入第一個寶寶名稱(關不掉) |
 | 月曆點一天 → 新增紀錄 → 儲存 | 月曆那一格出現「emoji + 食材名稱」 |
 | 右上角 Google 登入 | 系統的帳號選擇畫面,登入後換成頭像 |
+| 從「最近使用的 App」把 App 滑掉,再打開 | 直接是登入狀態(還是頭像),**不會**跳出選帳號畫面 |
 | App 設定 → 檢查更新 | 「公用資料已是最新」,今天還有 9 次 |
 | App 設定 → 打開「紀錄與雲端同步」 | 跳出 Google 的雲端硬碟授權;之後「最後同步」有時間 |
 | 打開「照片存到雲端」,新增一筆有照片的紀錄 | 雲端硬碟出現「媽媽記副食品/照片」資料夾與照片 |
@@ -998,6 +999,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 | First launch | Dark splash screen (icon only) → data-use principles, where "我了解了" (I understand) only becomes tappable after scrolling to the bottom → enter the first baby's name (can't be dismissed) |
 | Tap a day on the calendar → add a record → save | That calendar cell shows "emoji + food name" |
 | Google sign-in at the top right | The system's account picker; after signing in it turns into your avatar |
+| Swipe the app away from recent apps, then reopen it | Still signed in (still your avatar), and **no** account picker appears |
 | App settings → check for updates | "公用資料已是最新" (public data is up to date), 9 checks left today |
 | App settings → turn on "紀錄與雲端同步" (record cloud sync) | Google's Drive authorization pops up; afterwards "最後同步" (last sync) shows a time |
 | Turn on "照片存到雲端" (save photos to the cloud) and add a record with a photo | The "媽媽記副食品/照片" folder and the photo appear in Drive |
