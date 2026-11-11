@@ -14,7 +14,7 @@
 | 後端 API | [`mama-fufood-backend`](https://github.com/beethoreven/mama-fufood-backend) | Render(預計 `https://mama-fufood-backend.onrender.com`) |
 | 網站與管理後台 | [`mama-fufood-web`](https://github.com/beethoreven/mama-fufood-web) | GitHub Pages(`https://beethoreven.github.io/mama-fufood-web/`) |
 
-資料庫是 Neon Postgres 18,開在 **ap-southeast-1(Singapore)**,與 Render 同區。這不是效能微調而是前提:姊妹專案 zh-cn-to-tw 實測,兩端跨區時單次查詢 1.76 秒,同區 0.03 秒,差 59 倍。Neon 的區域建好之後不能改。
+資料庫是 Neon Postgres 18,開在 **ap-southeast-1(Singapore)**,與 Render 同區。這不是效能微調而是前提:實測兩端跨區時單次查詢 1.76 秒,同區 0.03 秒,差 59 倍。Neon 的區域建好之後不能改。
 
 ### 使用方式
 
@@ -350,7 +350,7 @@ Render 免費方案閒置 15 分鐘會休眠;每 10 分鐘打一次 `/health`,�
 
 **E3.** 在工作的詳情頁手動執行一次(Test run),展開執行記錄,狀態要是 **200**。
 
-★ 姊妹專案 boo-king-king 實測:Render 冷啟動要 **32.4 秒**,而 cron-job.org 免費方案**等 30 秒就斷線**,並且**連續失敗超過 25 次會自動停用那個工作**。所以服務剛好睡著時那一次可能記成失敗(但已經把它叫醒,下一次就成功);只要通知信沒有一直來就沒問題。如果連續收到失敗通知,先打開 `/health` 確認後端活著,再到 cron-job.org 確認工作沒有被停用。
+★ 實測:Render 冷啟動要 **32.4 秒**,而 cron-job.org 免費方案**等 30 秒就斷線**,並且**連續失敗超過 25 次會自動停用那個工作**。所以服務剛好睡著時那一次可能記成失敗(但已經把它叫醒,下一次就成功);只要通知信沒有一直來就沒問題。如果連續收到失敗通知,先打開 `/health` 確認後端活著,再到 cron-job.org 確認工作沒有被停用。
 
 **確認**:執行記錄連續幾次都是 200。
 
@@ -548,15 +548,25 @@ git -C mama-fufood-web push
 
 **確認**:App 打開後**還是登入狀態**,不用重新登入;App 設定 → 檢查更新 顯示「公用資料已是最新」;送一則意見回饋,管理後台看得到。
 
-**K4. 關掉舊服務(K3 的手機都確認過才做)。** 先確認是否做過:Render 上已經沒有 `mama-fufood-backend`,就做完了。
+**K4. 關掉舊服務(K3 的手機都確認過才做)。** 先確認是否做過:Render 上已經沒有 `mama-fufood-backend`、meta repo 裡也沒有 `mama-fufood-backend` 資料夾,而且 GitHub 上的 repo 是私人的,就做完了。
 
 1. cron-job.org:刪掉 Part E 建的「mama-fufood 保活」工作(router-backend 有自己的保活,打的是 router 的 `/health`)。
 2. Render:打開 `mama-fufood-backend` → **Settings** 最下面 → **Suspend Web Service**(暫停,隨時可以恢復)。觀察幾天沒問題再 **Delete Web Service**。
 3. Neon:**不要動**,新服務還在用。
+4. 從 meta repo 拿掉舊的子模組(要先做這一步,再做第 5 步;順序反過來,別人 clone meta repo 會失敗):
+
+   ```bash
+   git -C . submodule deinit -f mama-fufood-backend
+   git -C . rm -f mama-fufood-backend
+   git -C . commit -m "Remove the mama-fufood-backend submodule"
+   git -C . push
+   ```
+
+5. GitHub:打開 `mama-fufood-backend` repo → **Settings** → 最下面 **Change repository visibility** → **Make private**。
 
 還沒更新的舊版 App 會連不上後端(檢查更新與意見回饋失敗),紀錄不受影響,更新 App 就好。
 
-**確認**:舊網址打不開;新網址的 `/mama-fufood/ready` 還是 `"ok": true`。
+**確認**:舊網址打不開;新網址的 `/mama-fufood/ready` 還是 `"ok": true`;沒登入 GitHub 的瀏覽器打不開 `mama-fufood-backend` repo。
 
 ### 已知限制
 
@@ -581,7 +591,7 @@ Records live only on the phone and in the user's own Google Drive; the backend o
 | Backend API | [`mama-fufood-backend`](https://github.com/beethoreven/mama-fufood-backend) | Render (planned `https://mama-fufood-backend.onrender.com`) |
 | Website and admin console | [`mama-fufood-web`](https://github.com/beethoreven/mama-fufood-web) | GitHub Pages (`https://beethoreven.github.io/mama-fufood-web/`) |
 
-The database is Neon Postgres 18 in **ap-southeast-1 (Singapore)**, the same region as Render. This is a prerequisite, not a performance tweak: in the sister project zh-cn-to-tw, a single query took 1.76 s across regions and 0.03 s within the same region — 59 times slower. A Neon project's region cannot be changed after creation.
+The database is Neon Postgres 18 in **ap-southeast-1 (Singapore)**, the same region as Render. This is a prerequisite, not a performance tweak: measured, a single query took 1.76 s across regions and 0.03 s within the same region — 59 times slower. A Neon project's region cannot be changed after creation.
 
 ### Usage
 
@@ -917,7 +927,7 @@ Render's free tier sleeps after 15 minutes idle; hitting `/health` every 10 minu
 
 **E3.** Run it once manually from the job's detail page (Test run) and expand the run history: the status must be **200**.
 
-★ Measured in the sister project boo-king-king: a Render cold start takes **32.4 seconds**, while cron-job.org's free plan **closes the connection after 30 seconds**, and **auto-disables a job after more than 25 consecutive failures**. So the one run that hits a sleeping service may be recorded as a failure (but it has already woken the service, so the next run succeeds); as long as failure emails don't keep coming, all is well. If you do get repeated failure emails, first open `/health` to confirm the backend is alive, then check on cron-job.org that the job hasn't been disabled.
+★ Measured: a Render cold start takes **32.4 seconds**, while cron-job.org's free plan **closes the connection after 30 seconds**, and **auto-disables a job after more than 25 consecutive failures**. So the one run that hits a sleeping service may be recorded as a failure (but it has already woken the service, so the next run succeeds); as long as failure emails don't keep coming, all is well. If you do get repeated failure emails, first open `/health` to confirm the backend is alive, then check on cron-job.org that the job hasn't been disabled.
 
 **Check**: several consecutive runs in the history show 200.
 
@@ -1115,15 +1125,25 @@ git -C mama-fufood-web push
 
 **Check**: the app opens **still signed in**, with no new sign-in; App settings → check for updates says the public data is up to date; a feedback submission shows up in the admin console.
 
-**K4. Shut down the old service (only after every phone passed K3).** First check whether it's done: if `mama-fufood-backend` is gone from Render, you're done.
+**K4. Shut down the old service (only after every phone passed K3).** First check whether it's done: if `mama-fufood-backend` is gone from Render, the meta repo has no `mama-fufood-backend` folder, and the GitHub repo is private, you're done.
 
 1. cron-job.org: delete the "mama-fufood 保活" job from Part E (router-backend has its own keep-alive on the router's `/health`).
 2. Render: open `mama-fufood-backend` → bottom of **Settings** → **Suspend Web Service** (can be resumed any time). After a few days without problems, **Delete Web Service**.
 3. Neon: **leave it alone**; the new service uses it.
+4. Remove the old submodule from the meta repo (do this before step 5; the other way round, cloning the meta repo fails for others):
+
+   ```bash
+   git -C . submodule deinit -f mama-fufood-backend
+   git -C . rm -f mama-fufood-backend
+   git -C . commit -m "Remove the mama-fufood-backend submodule"
+   git -C . push
+   ```
+
+5. GitHub: open the `mama-fufood-backend` repo → **Settings** → bottom **Change repository visibility** → **Make private**.
 
 Old app versions that weren't updated can no longer reach the backend (update checks and feedback fail); records aren't affected, and updating the app fixes it.
 
-**Check**: the old URL no longer opens; `/mama-fufood/ready` at the new URL still shows `"ok": true`.
+**Check**: the old URL no longer opens; `/mama-fufood/ready` at the new URL still shows `"ok": true`; the `mama-fufood-backend` repo doesn't open in a browser that isn't signed in to GitHub.
 
 ### Known Limitations
 
