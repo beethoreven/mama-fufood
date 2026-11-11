@@ -55,7 +55,7 @@ git commit -m "Update mama-fufood-backend submodule pointer"
 3. 後端的網址 → 網站 `js/config.js` 的 `apiBase`、App `env/prod.json` 的 `MFF_API_BASE`、cron-job.org 的保活網址。
 4. App 簽署金鑰的 SHA-1 → Google Cloud 的 Android 用戶端。
 
-照 Part 0、A~J 的順序做。外部服務的帳號由你自己登入、自己設定;畫面上的選單名稱可能和這裡寫的略有不同(Google、Render、Neon 偶爾會改版),意思對得上就可以。每個 Part 最後都有「確認」,沒有通過就先不要往下做。
+照 Part 0、A~J 的順序做;Part K 是後端搬到共用的 router-backend,只做一次。外部服務的帳號由你自己登入、自己設定;畫面上的選單名稱可能和這裡寫的略有不同(Google、Render、Neon 偶爾會改版),意思對得上就可以。每個 Part 最後都有「確認」,沒有通過就先不要往下做。
 
 #### Part 0. 開始前準備
 
@@ -500,6 +500,64 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 
 有任何一步不對,在 App 的「意見回饋」選「遇到問題」送出。
 
+#### Part K. 搬到共用後端 router-backend
+
+後端從獨立的 `mama-fufood-backend` 搬進好幾個專案共用的 [router-backend](https://github.com/beethoreven/router-backend),網址變成 `https://router-backend-3hl2.onrender.com/fufood`。**資料庫不搬**:新服務連的就是 Part C 的同一個 Neon 資料庫(區域 ap-southeast-1,和 Render 同區)。程式已經在 router-backend 的 `apps/fufood/`。
+
+★ App 的通行證與後台的登入都不會失效,前提是 K1 的 `FUFOOD__SESSION_SECRET` 填**原本的** `SESSION_SECRET`。填了新的值,所有人都要重新登入。
+
+★ 新舊服務會同時連同一個資料庫一段時間,兩邊的每日上限各算各的。等 K3 的手機都換成新版、確認沒問題,才做 K4 關掉舊服務。
+
+**K1. Render 的環境變數。** 先確認是否做過:打開 `https://router-backend-3hl2.onrender.com/ready`,`"apps"` 裡的 `"fufood"` 是 `"loaded": true`,而且 `https://router-backend-3hl2.onrender.com/fufood/ready` 的 `"database_configured"` 是 `true`,就跳到 K2。
+
+到 Render 打開 `mama-fufood-backend` 服務 → **Environment**,把原本的值複製下來;再打開 `router-backend` 服務 → **Environment → Add Environment Variable**,加上這五個(名稱前面多了 `FUFOOD__`,**兩個底線**;值不要加引號):
+
+| 名稱 | 值 |
+|---|---|
+| `FUFOOD__DATABASE_URL` | `mama-fufood-backend` 的 `DATABASE_URL`(同一個) |
+| `FUFOOD__GOOGLE_CLIENT_ID` | `mama-fufood-backend` 的 `GOOGLE_CLIENT_ID` |
+| `FUFOOD__SESSION_SECRET` | `mama-fufood-backend` 的 `SESSION_SECRET`(**一定要同一個**) |
+| `FUFOOD__ALLOWED_ORIGINS` | `https://beethoreven.github.io` |
+| `FUFOOD__FIRST_ADMIN_EMAIL` | `mama-fufood-backend` 的 `FIRST_ADMIN_EMAIL` |
+
+**Save** 之後 Render 會自動重新部署,約 2~5 分鐘。
+
+**確認:**
+- `https://router-backend-3hl2.onrender.com/ready`:`"fufood"` 是 `"loaded": true`。
+- `https://router-backend-3hl2.onrender.com/fufood/ready`:`"ok": true`,`"cache"` 裡有食材清單與單位的版本。第一次可能是 503(第一個請求才開始載入),等半分鐘再重新整理。
+- 部署記錄出現「… have the same value」:兩個專案的 `DATABASE_URL` 或 `SESSION_SECRET` 填成一樣的,服務不會換成新版;「… wrapped in quotes」:值多了引號。
+
+**K2. 網站改用新網址。** 先確認是否做過:`mama-fufood-web/js/config.js` 的 `apiBase` 已經是 `https://router-backend-3hl2.onrender.com/fufood` 就跳到 K3。
+
+把 `apiBase` 改成 `https://router-backend-3hl2.onrender.com/fufood`,重跑示範版的產生工具,提交並推送:
+
+```bash
+python3 mama-fufood-web/demo/tools/build.py
+git -C mama-fufood-web add -A
+git -C mama-fufood-web commit -m "Point the site at the router-backend URL"
+git -C mama-fufood-web push
+```
+
+**確認**:一兩分鐘後打開管理後台,登入後「總覽」看得到公用資料的版本。
+
+**K3. App 改用新網址並發新版。** 先確認是否做過:`mama-fufood-app/env/prod.json` 的 `MFF_API_BASE` 已經是新網址,而且手機上 App 設定頁的版本是新版,就跳到 K4。
+
+1. `mama-fufood-app/env/prod.json` 的 `MFF_API_BASE` 改成 `https://router-backend-3hl2.onrender.com/fufood`(結尾不要斜線)。
+2. 版號照 App README 的規則加一(只換後端網址、匯出格式沒變,所以 x 不動)。
+3. 照 Part H 的 H2 打包、H4 安裝到每一支手機。
+
+**確認**:App 打開後**還是登入狀態**,不用重新登入;App 設定 → 檢查更新 顯示「公用資料已是最新」;送一則意見回饋,管理後台看得到。
+
+**K4. 關掉舊服務(K3 的手機都確認過才做)。** 先確認是否做過:Render 上已經沒有 `mama-fufood-backend`,就做完了。
+
+1. cron-job.org:刪掉 Part E 建的「mama-fufood 保活」工作(router-backend 有自己的保活,打的是 router 的 `/health`)。
+2. Render:打開 `mama-fufood-backend` → **Settings** 最下面 → **Suspend Web Service**(暫停,隨時可以恢復)。觀察幾天沒問題再 **Delete Web Service**。
+3. Neon:**不要動**,新服務還在用。
+
+還沒更新的舊版 App 會連不上後端(檢查更新與意見回饋失敗),紀錄不受影響,更新 App 就好。
+
+**確認**:舊網址打不開;新網址的 `/fufood/ready` 還是 `"ok": true`。
+
 ### 已知限制
 
 - **這份上線 SOP 還沒有照著完整跑過一次**;實際做的時候遇到和這裡不一樣的畫面或錯誤,要回來修正這份文件。Google 同意畫面在發布時會不會要求驗證網域,事先無法確認,所以 B6 寫了替代做法。
@@ -564,7 +622,7 @@ That final `git add` + `commit` cannot be skipped — without it, the submodule'
 3. The backend's URL → the website's `apiBase` in `js/config.js`, the app's `MFF_API_BASE` in `env/prod.json`, and the keep-alive URL on cron-job.org.
 4. The SHA-1 of the app's signing key → the Android client in Google Cloud.
 
-Follow Part 0 and Parts A–J in order. You sign in to and configure every external service yourself; menu names on screen may differ slightly from what's written here (Google, Render and Neon redesign occasionally) — as long as the meaning matches, you're fine. Every Part ends with a "Check"; don't move on until it passes.
+Follow Part 0 and Parts A–J in order; Part K moves the backend to the shared router-backend and is done once. You sign in to and configure every external service yourself; menu names on screen may differ slightly from what's written here (Google, Render and Neon redesign occasionally) — as long as the meaning matches, you're fine. Every Part ends with a "Check"; don't move on until it passes.
 
 #### Part 0. Before You Start
 
@@ -1008,6 +1066,64 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 | A second phone signs in to the same account and turns on sync | The two phones' records merge (you're only asked which side to keep when both changed the same record) |
 
 If any step doesn't match, send feedback from the app with "遇到問題" (ran into a problem).
+
+#### Part K. Move to the shared router-backend
+
+The backend moves from the standalone `mama-fufood-backend` into [router-backend](https://github.com/beethoreven/router-backend), a service shared by several projects; the URL becomes `https://router-backend-3hl2.onrender.com/fufood`. **The database doesn't move**: the new service connects to the same Neon database from Part C (region ap-southeast-1, the same as Render). The code is already in router-backend's `apps/fufood/`.
+
+★ App passes and admin sign-ins stay valid, as long as `FUFOOD__SESSION_SECRET` in K1 is the **original** `SESSION_SECRET`. With a new value, everyone has to sign in again.
+
+★ For a while both services connect to the same database, each with its own daily limits. Only after every phone runs the new version from K3 and works do you shut the old service down in K4.
+
+**K1. Render environment variables.** First check whether it's done: if `https://router-backend-3hl2.onrender.com/ready` shows `"fufood"` with `"loaded": true` under `"apps"`, and `"database_configured"` is `true` at `https://router-backend-3hl2.onrender.com/fufood/ready`, skip to K2.
+
+In Render, open the `mama-fufood-backend` service → **Environment** and copy its values; then open the `router-backend` service → **Environment → Add Environment Variable** and add these five (the names gain a `FUFOOD__` prefix, **two underscores**; no quotes around values):
+
+| Name | Value |
+|---|---|
+| `FUFOOD__DATABASE_URL` | `DATABASE_URL` from `mama-fufood-backend` (the same one) |
+| `FUFOOD__GOOGLE_CLIENT_ID` | `GOOGLE_CLIENT_ID` from `mama-fufood-backend` |
+| `FUFOOD__SESSION_SECRET` | `SESSION_SECRET` from `mama-fufood-backend` (**must be the same**) |
+| `FUFOOD__ALLOWED_ORIGINS` | `https://beethoreven.github.io` |
+| `FUFOOD__FIRST_ADMIN_EMAIL` | `FIRST_ADMIN_EMAIL` from `mama-fufood-backend` |
+
+After **Save**, Render redeploys automatically (about 2–5 minutes).
+
+**Check:**
+- `https://router-backend-3hl2.onrender.com/ready`: `"fufood"` has `"loaded": true`.
+- `https://router-backend-3hl2.onrender.com/fufood/ready`: `"ok": true`, with the food-list and unit versions under `"cache"`. The first visit may be 503 (loading starts on the first request); wait half a minute and reload.
+- If the deploy log says "… have the same value", two projects share a `DATABASE_URL` or `SESSION_SECRET` and the new version won't go live; "… wrapped in quotes" means a value has quotes.
+
+**K2. Point the website at the new URL.** First check whether it's done: if `apiBase` in `mama-fufood-web/js/config.js` is already `https://router-backend-3hl2.onrender.com/fufood`, skip to K3.
+
+Change `apiBase` to `https://router-backend-3hl2.onrender.com/fufood`, rerun the demo generator, then commit and push:
+
+```bash
+python3 mama-fufood-web/demo/tools/build.py
+git -C mama-fufood-web add -A
+git -C mama-fufood-web commit -m "Point the site at the router-backend URL"
+git -C mama-fufood-web push
+```
+
+**Check**: a minute or two later, open the admin console; after signing in, the overview shows the public data versions.
+
+**K3. Point the app at the new URL and release a new version.** First check whether it's done: if `MFF_API_BASE` in `mama-fufood-app/env/prod.json` is already the new URL and the app's settings page on the phone shows the new version, skip to K4.
+
+1. Change `MFF_API_BASE` in `mama-fufood-app/env/prod.json` to `https://router-backend-3hl2.onrender.com/fufood` (no trailing slash).
+2. Bump the version per the app README's rules (only the backend URL changes and the export format doesn't, so x stays).
+3. Build with H2 and install on every phone with H4 from Part H.
+
+**Check**: the app opens **still signed in**, with no new sign-in; App settings → check for updates says the public data is up to date; a feedback submission shows up in the admin console.
+
+**K4. Shut down the old service (only after every phone passed K3).** First check whether it's done: if `mama-fufood-backend` is gone from Render, you're done.
+
+1. cron-job.org: delete the "mama-fufood 保活" job from Part E (router-backend has its own keep-alive on the router's `/health`).
+2. Render: open `mama-fufood-backend` → bottom of **Settings** → **Suspend Web Service** (can be resumed any time). After a few days without problems, **Delete Web Service**.
+3. Neon: **leave it alone**; the new service uses it.
+
+Old app versions that weren't updated can no longer reach the backend (update checks and feedback fail); records aren't affected, and updating the app fixes it.
+
+**Check**: the old URL no longer opens; `/fufood/ready` at the new URL still shows `"ok": true`.
 
 ### Known Limitations
 
