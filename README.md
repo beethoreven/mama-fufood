@@ -11,7 +11,7 @@
 | 子系統 | Repo | 部署/產出 |
 |---|---|---|
 | Android App | [`mama-fufood-app`](https://github.com/beethoreven/mama-fufood-app) | 本機打包成 APK,用 `adb` 安裝到手機(還沒有上架 Google Play) |
-| 後端 API | [`mama-fufood-backend`](https://github.com/beethoreven/mama-fufood-backend) | Render(預計 `https://mama-fufood-backend.onrender.com`) |
+| 後端 API | [`router-backend`](https://github.com/beethoreven/router-backend) 的 `apps/mama_fufood/`(好幾個專案共用的後端) | Render(`https://router-backend-3hl2.onrender.com/mama-fufood`) |
 | 網站與管理後台 | [`mama-fufood-web`](https://github.com/beethoreven/mama-fufood-web) | GitHub Pages(`https://beethoreven.github.io/mama-fufood-web/`) |
 
 資料庫是 Neon Postgres 18,開在 **ap-southeast-1(Singapore)**,與 Render 同區。這不是效能微調而是前提:實測兩端跨區時單次查詢 1.76 秒,同區 0.03 秒,差 59 倍。Neon 的區域建好之後不能改。
@@ -35,11 +35,11 @@ git submodule update --init --recursive
 **更新某個子模組到它自己 repo 的最新版本:**
 
 ```bash
-cd mama-fufood-backend   # 或 mama-fufood-app、mama-fufood-web
+cd mama-fufood-app   # 或 mama-fufood-web、router-backend
 git pull origin main
 cd ..
-git add mama-fufood-backend
-git commit -m "Update mama-fufood-backend submodule pointer"
+git add mama-fufood-app
+git commit -m "Update mama-fufood-app submodule pointer"
 ```
 
 最後這個 `git add` + `commit` 不能省略——沒做的話,子模組本機檔案雖然是新的,但這個 wrapper repo 記錄的「該指向哪個 commit」還是舊的,別人 `clone` 這個 repo 還是會抓到舊版本。
@@ -588,7 +588,7 @@ Records live only on the phone and in the user's own Google Drive; the backend o
 | Subsystem | Repo | Deployment / output |
 |---|---|---|
 | Android app | [`mama-fufood-app`](https://github.com/beethoreven/mama-fufood-app) | Built locally into an APK and installed with `adb` (not on Google Play yet) |
-| Backend API | [`mama-fufood-backend`](https://github.com/beethoreven/mama-fufood-backend) | Render (planned `https://mama-fufood-backend.onrender.com`) |
+| Backend API | [`router-backend`](https://github.com/beethoreven/router-backend), `apps/mama_fufood/` (a backend shared by several projects) | Render (`https://router-backend-3hl2.onrender.com/mama-fufood`) |
 | Website and admin console | [`mama-fufood-web`](https://github.com/beethoreven/mama-fufood-web) | GitHub Pages (`https://beethoreven.github.io/mama-fufood-web/`) |
 
 The database is Neon Postgres 18 in **ap-southeast-1 (Singapore)**, the same region as Render. This is a prerequisite, not a performance tweak: measured, a single query took 1.76 s across regions and 0.03 s within the same region — 59 times slower. A Neon project's region cannot be changed after creation.
@@ -612,11 +612,11 @@ git submodule update --init --recursive
 **Updating a submodule to its own repo's latest version:**
 
 ```bash
-cd mama-fufood-backend   # or mama-fufood-app, mama-fufood-web
+cd mama-fufood-app   # or mama-fufood-web, router-backend
 git pull origin main
 cd ..
-git add mama-fufood-backend
-git commit -m "Update mama-fufood-backend submodule pointer"
+git add mama-fufood-app
+git commit -m "Update mama-fufood-app submodule pointer"
 ```
 
 That final `git add` + `commit` cannot be skipped — without it, the submodule's local files are up to date, but this wrapper repo's recorded "which commit to point at" is still stale, so anyone else who `clone`s this repo will still get the old version.
