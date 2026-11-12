@@ -50,12 +50,12 @@ git commit -m "Update mama-fufood-app submodule pointer"
 
 ★ 上線步驟刻意放在這裡而不是各子系統的 README,因為它**跨越三個子系統與 Google Cloud**,有幾條交叉引用,拆開之後就沒有人能照著做完:
 
-1. Google Cloud「網頁應用程式」用戶端 ID → 後端的 `GOOGLE_CLIENT_ID`、網站 `js/config.js` 的 `googleClientId`、App `env/prod.json` 的 `MFF_WEB_CLIENT_ID`(三個地方是同一個值)。
-2. 網站的網址 → 後端的 `ALLOWED_ORIGINS`、Google 用戶端的「已授權的 JavaScript 來源」、Google 同意畫面的「已授權網域」與連結。
-3. 後端的網址 → 網站 `js/config.js` 的 `apiBase`、App `env/prod.json` 的 `MFF_API_BASE`、cron-job.org 的保活網址。
+1. Google Cloud「網頁應用程式」用戶端 ID → router-backend 的 `MAMA_FUFOOD__GOOGLE_CLIENT_ID`、網站 `js/config.js` 的 `googleClientId`、App `env/prod.json` 的 `MFF_WEB_CLIENT_ID`(三個地方是同一個值)。
+2. 網站的網址 → router-backend 的 `MAMA_FUFOOD__ALLOWED_ORIGINS`、Google 用戶端的「已授權的 JavaScript 來源」、Google 同意畫面的「已授權網域」與連結。
+3. 後端的網址(`https://router-backend-3hl2.onrender.com/mama-fufood`)→ 網站 `js/config.js` 的 `apiBase`、App `env/prod.json` 的 `MFF_API_BASE`。
 4. App 簽署金鑰的 SHA-1 → Google Cloud 的 Android 用戶端。
 
-照 Part 0、A~J 的順序做;Part K 是後端搬到共用的 router-backend,只做一次。外部服務的帳號由你自己登入、自己設定;畫面上的選單名稱可能和這裡寫的略有不同(Google、Render、Neon 偶爾會改版),意思對得上就可以。每個 Part 最後都有「確認」,沒有通過就先不要往下做。
+從頭架設照 Part 0、A~J 的順序做。後端是好幾個專案共用的 [router-backend](https://github.com/beethoreven/router-backend),Render 服務本身與它的保活照 router-backend 的 README 建立,這裡只寫 mama-fufood 要加的設定(Part D)。Part K 是從舊的獨立後端 `mama-fufood-backend` 搬過來的步驟,目前只剩 K4。外部服務的帳號由你自己登入、自己設定;畫面上的選單名稱可能和這裡寫的略有不同(Google、Render、Neon 偶爾會改版),意思對得上就可以。每個 Part 最後都有「確認」,沒有通過就先不要往下做。
 
 #### Part 0. 開始前準備
 
@@ -66,19 +66,18 @@ git commit -m "Update mama-fufood-app submodule pointer"
 | GitHub | 放程式;網站用 GitHub Pages | 用已經設好 SSH 別名 `github.com-beethoreven` 的帳號 |
 | Google | 建 Google Cloud 專案(登入與雲端硬碟);也是管理後台的第一位管理員 | 用你自己常用的 Google 帳號;不需要付款資料 |
 | Neon | 資料庫 | 用 GitHub 帳號登入 |
-| Render | 後端 | 用 GitHub 帳號登入(之後連 repo 比較方便) |
-| cron-job.org | 每 10 分鐘叫醒後端 | 用 Email 註冊 |
+| Render | 後端(router-backend 服務) | 用 GitHub 帳號登入 |
 
 **2. 準備一個安全的地方記下這些值**(例如密碼管理器)。標「秘密」的不能貼到聊天、不能進 git。
 
 | 值 | 在哪一步產生 | 要填到哪裡 | 秘密 |
 |---|---|---|---|
 | 網站網址 `https://beethoreven.github.io/mama-fufood-web/` | 已知(repo 名稱決定) | Google 同意畫面的連結;來源只填 `https://beethoreven.github.io` | |
-| Web Client ID(`….apps.googleusercontent.com`) | B7 | Render 的 `GOOGLE_CLIENT_ID`、網站 `js/config.js`、App `env/prod.json` | |
+| Web Client ID(`….apps.googleusercontent.com`) | B7 | Render 的 `MAMA_FUFOOD__GOOGLE_CLIENT_ID`、網站 `js/config.js`、App `env/prod.json` | |
 | 除錯金鑰的 SHA-1 | B7 | Google Cloud 的 Android 用戶端(開發用) | |
-| Neon 連線字串 | C3 | Render 的 `DATABASE_URL` | **秘密** |
-| `SESSION_SECRET` | D5 | Render | **秘密** |
-| 後端網址(`https://….onrender.com`) | D7 | 網站 `js/config.js`、App `env/prod.json`、cron-job.org | |
+| Neon 連線字串 | C3 | Render 的 `MAMA_FUFOOD__DATABASE_URL` | **秘密** |
+| Session 金鑰 | D2 | Render 的 `MAMA_FUFOOD__SESSION_SECRET` | **秘密** |
+| 後端網址 `https://router-backend-3hl2.onrender.com/mama-fufood` | 已知(router-backend 的網址加上 `/mama-fufood`) | 網站 `js/config.js`、App `env/prod.json` | |
 | 簽署金鑰檔與它的密碼 | G1 | `android/key.properties`;**一定要備份** | **秘密** |
 | 正式金鑰的 SHA-1 | G4 | Google Cloud 的 Android 用戶端(正式版) | |
 
@@ -96,16 +95,16 @@ git commit -m "Update mama-fufood-app submodule pointer"
 
 #### Part A. 建立 repo 與推送
 
-四個 repo 都設 **Public**:GitHub 免費方案的 Pages 只能從公開 repo 發布。秘密(資料庫連線字串、session 金鑰、簽署金鑰)都走環境變數或 `.gitignore`,不會因為公開而外洩。規格與設計文件只留在本機,不進 git(這個 repo 的 `.gitignore` 是白名單)。
+三個 repo(`mama-fufood`、`mama-fufood-app`、`mama-fufood-web`)都設 **Public**:GitHub 免費方案的 Pages 只能從公開 repo 發布。第四個子模組 `router-backend` 是共用的 repo,已經存在,不在這裡建立,它的修改照它自己的 README 推送。秘密(資料庫連線字串、session 金鑰、簽署金鑰)都走環境變數或 `.gitignore`,不會因為公開而外洩。規格與設計文件只留在本機,不進 git(這個 repo 的 `.gitignore` 是白名單)。
 
 ★ GitHub 的 SSH 別名是 **`github.com-beethoreven`**,不是純 `github.com`。用錯會推不上去。
 
 ★ 下面的指令都用 `git -C <資料夾>` 指定是哪一個 repo,**一律在 meta repo 的資料夾(`mama-fufood/`)裡執行**,不用 `cd` 進出,也就不會在錯的資料夾裡設定或推送。每一步開頭都有「確認是否做過」,做過就跳到下一步。
 
-**A1. 在 GitHub 建立四個空的公開 repo**
+**A1. 在 GitHub 建立三個空的公開 repo**
 
-- 確認是否做過:瀏覽器打開 `https://github.com/beethoreven/mama-fufood`、`…/mama-fufood-app`、`…/mama-fufood-backend`、`…/mama-fufood-web`,四個都存在就跳過。
-- 做法:到 <https://github.com/new> 建立這四個 repo。Owner 選 `beethoreven`、Visibility 選 **Public**;**不要**勾選加入 README、.gitignore 或授權條款,否則第一次推送會衝突。
+- 確認是否做過:瀏覽器打開 `https://github.com/beethoreven/mama-fufood`、`…/mama-fufood-app`、`…/mama-fufood-web`,三個都存在就跳過。
+- 做法:到 <https://github.com/new> 建立這三個 repo。Owner 選 `beethoreven`、Visibility 選 **Public**;**不要**勾選加入 README、.gitignore 或授權條款,否則第一次推送會衝突。
 
 **A2. 在本機提交**
 
@@ -114,25 +113,22 @@ git commit -m "Update mama-fufood-app submodule pointer"
   ```bash
   git log --oneline -1
   git -C mama-fufood-app log --oneline -1
-  git -C mama-fufood-backend log --oneline -1
   git -C mama-fufood-web log --oneline -1
   ```
 
-  四個都印出一筆提交,而且 `cat .gitmodules` 列出三個子模組,就跳過。
-- 做法:三個子專案先各自提交,再在 meta 掛上子模組後提交(子模組的資料夾已經是 git repo,`git submodule add` 會直接掛上現有的 repo,不會重新下載;`.gitmodules` 用 https 網址,別人才 clone 得到):
+  三個都印出一筆提交,而且 `cat .gitmodules` 列出 `mama-fufood-app`、`mama-fufood-web`、`router-backend` 三個子模組,就跳過。
+- 做法:兩個子專案先各自提交,再在 meta 掛上子模組後提交(子模組的資料夾已經是 git repo,`git submodule add` 會直接掛上現有的 repo,不會重新下載;`.gitmodules` 用 https 網址,別人才 clone 得到):
 
   ```bash
   git -C mama-fufood-app add -A
   git -C mama-fufood-app commit -m "Initial commit"
-  git -C mama-fufood-backend add -A
-  git -C mama-fufood-backend commit -m "Initial commit"
   git -C mama-fufood-web add -A
   git -C mama-fufood-web commit -m "Initial commit"
   git submodule add https://github.com/beethoreven/mama-fufood-app.git mama-fufood-app
-  git submodule add https://github.com/beethoreven/mama-fufood-backend.git mama-fufood-backend
   git submodule add https://github.com/beethoreven/mama-fufood-web.git mama-fufood-web
+  git submodule add https://github.com/beethoreven/router-backend.git router-backend
   git add -A
-  git commit -m "Add the app, backend and web repos as submodules"
+  git commit -m "Add the app, web and router-backend repos as submodules"
   ```
 
 **A3. 設定每個 repo 要推到哪裡(remote)**
@@ -142,23 +138,21 @@ git commit -m "Update mama-fufood-app submodule pointer"
   ```bash
   git remote -v
   git -C mama-fufood-app remote -v
-  git -C mama-fufood-backend remote -v
   git -C mama-fufood-web remote -v
   ```
 
-  每個 repo 的 `origin` 網址結尾都要是**它自己的名稱**:meta 是 `…/mama-fufood.git`,`mama-fufood-app` 是 `…/mama-fufood-app.git`,以此類推。四個都對就跳過。
+  每個 repo 的 `origin` 網址結尾都要是**它自己的名稱**:meta 是 `…/mama-fufood.git`,`mama-fufood-app` 是 `…/mama-fufood-app.git`,以此類推。三個都對就跳過。
 - 沒有 `origin` 的,加上去:
 
   ```bash
   git remote add origin git@github.com-beethoreven:beethoreven/mama-fufood.git
   git -C mama-fufood-app remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-app.git
-  git -C mama-fufood-backend remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-backend.git
   git -C mama-fufood-web remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-web.git
   ```
 
 - 已經有 `origin` 但網址不對的:把那一行的 `remote add` 換成 `remote set-url`。
 
-**A4. 推送(順序不能反:三個子專案先,meta 最後)**
+**A4. 推送(順序不能反:子專案先,meta 最後)**
 
 meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存在的 commit。
 
@@ -169,17 +163,16 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
   git -C mama-fufood-app log -1 --format=%H
   ```
 
-  第一行印出的 `refs/heads/main` 前面那串編號,要和第二行一樣;另外三個 repo 照樣比對(meta 用 `git log -1 --format=%H`)。都一樣就跳過。
+  第一行印出的 `refs/heads/main` 前面那串編號,要和第二行一樣;`mama-fufood-web` 和 meta 照樣比對(meta 用 `git log -1 --format=%H`)。都一樣就跳過。
 - 做法:
 
   ```bash
   git -C mama-fufood-app push -u origin main
-  git -C mama-fufood-backend push -u origin main
   git -C mama-fufood-web push -u origin main
   git push -u origin main
   ```
 
-**確認**:GitHub 上四個 repo 都看得到各自的檔案;`mama-fufood` repo 裡三個子模組顯示成「資料夾名稱 @ 一串 commit 編號」,點得進去。
+**確認**:GitHub 上三個 repo 都看得到各自的檔案;`mama-fufood` repo 裡三個子模組顯示成「資料夾名稱 @ 一串 commit 編號」,點得進去。
 
 **推錯了怎麼辦**:某個 GitHub repo 收到的是別的 repo 的內容(例如 A3 的網址設錯):先用 `remote set-url` 改正網址,再對那個 repo 用 `git -C <資料夾> push --force -u origin main` 覆蓋。強制推送會蓋掉 GitHub 上那個分支原本的內容,只在確定那份內容是推錯的時候用。
 
@@ -281,85 +274,46 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 
 **C3. 取得連線字串。** 專案首頁 → **Connect** → 打開 **Connection pooling** → 複製連線字串。確認它長得像 `postgresql://…@ep-…-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`:主機名稱有 **`-pooler`**、區域是 **ap-southeast-1**、最後有 **`sslmode=require`**。
 
-**C4.** 這串含有資料庫密碼:只貼到 Render 的環境變數,不要貼到聊天、不要進 git。
+**C4.** 這串含有資料庫密碼:只貼到 Render 的環境變數(D2 的 `MAMA_FUFOOD__DATABASE_URL`),不要貼到聊天、不要進 git。每個專案要用自己的資料庫:router-backend 發現兩個專案的資料庫連線字串一樣時會拒絕啟動。
 
-**確認**:Neon 的專案列表看得到 `mama-fufood`,區域顯示 Singapore。資料表不用自己建,後端第一次啟動時會自動建。
+**確認**:Neon 的專案列表看得到 `mama-fufood`,區域顯示 Singapore。資料表不用自己建,後端第一次連上時會自動建。
 
-#### Part D. Render 後端
+#### Part D. Render 後端(router-backend 上的 mama-fufood)
 
-**D1.** 打開 <https://dashboard.render.com/>,用 GitHub 帳號登入。
+後端程式在 router-backend 的 `apps/mama_fufood/`,跟著 router-backend 一起部署在 Render 的 `router-backend` 服務上(網址 `https://router-backend-3hl2.onrender.com`,mama-fufood 掛在 `/mama-fufood` 底下)。Render 服務本身(workspace、建立服務、免費額度、保活)由 router-backend 的 README 負責;這裡只加 mama-fufood 的環境變數。
 
-**D2. 選 workspace。** 免費方案每月 750 小時是**整個 workspace 共用**的,用完之後,這個 workspace 裡**所有**免費服務都會停到下個月初([Render 說明](https://render.com/docs/free))。這個後端有保活、24 小時開著,一個月約 744 小時,幾乎用掉全部額度,所以同一個 workspace 裡不能有其他也要醒著的免費服務。
+**D1.** 先確認是否做過:打開 `https://router-backend-3hl2.onrender.com/mama-fufood/ready`,`"ok": true` 而且 `"database_configured": true`,就跳到 Part E。
 
-- 可以開新的 workspace:左上的 workspace 選單 → **New workspace** → 名稱例如 `mama-fufood`,方案選免費的。
-- 新的 workspace 不給選免費方案(Hobby 顯示 limit reached,代表這個帳號的免費 workspace 已經用完),或不想開新的,就用既有的 workspace:先把裡面其他的免費服務停掉(服務頁 → **Settings** → 最下面的 **Suspend Web Service**,之後要用再按 **Resume**),它們的保活也一起關掉。只是拿掉保活、不停用的話,服務每被叫醒一次至少會醒著 15 分鐘,大月只剩 6 小時可用,用完會連這個後端一起停。
-
-**D3. 建立 Web Service。** 確認左上是 D2 選的 workspace → **New → Web Service** → Git Provider 選 **GitHub**。第一次會請你授權 Render 讀 GitHub:建議選 **Only select repositories**,勾 `mama-fufood-backend` → 回到 Render,選 `mama-fufood-backend`。列表裡沒有 `mama-fufood-backend`(這個 workspace 以前授權過、當時只勾了別的 repo):在列表下方按 **Configure GitHub**(或到 GitHub 的 **Settings → Applications → Render → Configure**),把 `mama-fufood-backend` 加進去再回來。
-
-**D4. 設定:**
-
-| 欄位 | 值 |
-|---|---|
-| Name | `mama-fufood-backend`(網址會是 `https://mama-fufood-backend.onrender.com`;被用走的話換一個,後面所有用到後端網址的地方跟著改) |
-| Language | **Python 3**(版本會讀 repo 裡的 `.python-version`,3.15.1) |
-| Branch | `main` |
-| Region | **Singapore** |
-| Root Directory | 留空 |
-| Build Command | `pip install -r requirements.txt` |
-| Start Command | `gunicorn app:app --workers 1 --threads 8 --timeout 120`(**一定要單一 worker**,原因見後端 README) |
-| Instance Type | **Free** |
-
-**D5. 環境變數**(同一頁的 **Environment Variables → Add Environment Variable**;各變數的完整說明見後端 README 的 Part D):
+**D2. 環境變數。** 打開 <https://dashboard.render.com/>(用 GitHub 帳號登入)→ `router-backend` 服務 → **Environment → Add Environment Variable**,加上這五個(名稱前面是 `MAMA_FUFOOD__`,**兩個底線**;值**不要加引號**):
 
 | 名稱 | 值 |
 |---|---|
-| `DATABASE_URL` | C3 的 Neon 連線字串 |
-| `GOOGLE_CLIENT_ID` | B7 的 Web Client ID |
-| `ALLOWED_ORIGINS` | `https://beethoreven.github.io`(**結尾不要斜線**,不含路徑) |
-| `FIRST_ADMIN_EMAIL` | 你要當第一位管理員的 Google 帳號 Email |
-| `SESSION_SECRET` | 一串亂數,在終端機執行 `python3 -c "import secrets; print(secrets.token_hex(32))"` 產生 |
+| `MAMA_FUFOOD__DATABASE_URL` | C3 的 Neon 連線字串 |
+| `MAMA_FUFOOD__GOOGLE_CLIENT_ID` | B7 的 Web Client ID |
+| `MAMA_FUFOOD__SESSION_SECRET` | 一串亂數,在終端機執行 `python3 -c "import secrets; print(secrets.token_hex(32))"` 產生。**已經有人在用時不能換**,換了 App 的通行證和後台的登入全部失效,所有人都要重新登入 |
+| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://beethoreven.github.io`(**結尾不要斜線**,不含路徑) |
+| `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` | 你要當第一位管理員的 Google 帳號 Email |
 
-**D6. Advanced:** Health Check Path 填 `/health`(不碰資料庫,部署時 Render 用它確認服務起來了);Auto-Deploy 維持預設(推上 `main` 就自動部署)。
-
-**D7.** 按 **Deploy Web Service**,看畫面上的部署記錄,大約 2~5 分鐘。部署成功後,服務頁面上方會顯示網址,**記下來**。
+**Save** 之後 Render 會自動重新部署,約 2~5 分鐘。
 
 **確認:**
-- 瀏覽器打開 `https://mama-fufood-backend.onrender.com/health`(換成你的網址),看到 `"ok": true`。
-- 打開 `/ready`,看到 `"ok": true`,`"cache"` 裡有食材清單與單位的版本(`20261023000000`)。第一次可能要等半分鐘左右(資料庫在喚醒、後端在建表),回 503 就等一下再重新整理。第一次啟動時,後端會自動建表、放入第一版的食材清單(11 組、105 種)與單位。
+- `https://router-backend-3hl2.onrender.com/ready`:`"apps"` 裡的 `"mama-fufood"` 是 `"loaded": true`。
+- `https://router-backend-3hl2.onrender.com/mama-fufood/ready`:`"ok": true`,`"cache"` 裡有食材清單與單位的版本。第一次可能是 503(第一個請求才開始載入、資料庫在喚醒、第一次連上時會建表並放入第一版的食材清單與單位),等半分鐘再重新整理。
 
 **常見問題:**
-- 部署記錄說找不到 Python 3.15.1:Render 還沒有這一版。把 `.python-version` 改成 Render 有的最新版、在旁邊寫下原因,推上去重新部署。
-- `/ready` 一直是 503、`database_last_ok` 一直是 `null`:先看 `/ready` 的 `database_configured`,`false` 就是 Render 沒讀到 `DATABASE_URL`;`true` 就到 Render 的 **Logs** 找「公用資料快取」:每 30 秒一行「載入失敗」代表 `DATABASE_URL` 貼錯(多了空白、少了 `sslmode=require`)或 Neon 專案被暫停;連「開始在背景載入」都沒有,代表部署的還是舊版後端,確認最新的提交有部署上去。
+- 部署記錄出現「… have the same value」:兩個專案的資料庫連線字串或 session 金鑰填成一樣的,服務不會換成新版;「… wrapped in quotes」:值多了引號。
+- `/mama-fufood/ready` 一直是 503、`database_last_ok` 一直是 `null`:`database_configured` 是 `false` 就是 Render 沒讀到 `MAMA_FUFOOD__DATABASE_URL`(名稱拼錯、少一個底線);是 `true` 就到 Render 的 **Logs** 找「公用資料快取」:每 30 秒一行「載入失敗」代表連線字串貼錯(多了空白、少了 `sslmode=require`)或 Neon 專案被暫停。
 
-#### Part E. cron-job.org(保活)
+#### Part E. 保活(不用另外設)
 
-Render 免費方案閒置 15 分鐘會休眠;每 10 分鐘打一次 `/health`,就不會睡著。`/health` 不碰資料庫,Neon 照樣可以休眠,免費方案的時數不會被保活用掉。
-
-**E1.** 打開 <https://cron-job.org/>,註冊並登入。
-
-**E2. Create cronjob:**
-
-| 欄位 | 值 |
-|---|---|
-| Title | `mama-fufood 保活` |
-| URL | `https://mama-fufood-backend.onrender.com/health`(你的後端網址加 `/health`) |
-| Execution schedule | 每 10 分鐘(Every 10 minutes) |
-| Notifications | 打開「執行失敗時通知」,寄到你的信箱 |
-
-**Create** 存檔。
-
-**E3.** 在工作的詳情頁手動執行一次(Test run),展開執行記錄,狀態要是 **200**。
-
-★ 實測:Render 冷啟動要 **32.4 秒**,而 cron-job.org 免費方案**等 30 秒就斷線**,並且**連續失敗超過 25 次會自動停用那個工作**。所以服務剛好睡著時那一次可能記成失敗(但已經把它叫醒,下一次就成功);只要通知信沒有一直來就沒問題。如果連續收到失敗通知,先打開 `/health` 確認後端活著,再到 cron-job.org 確認工作沒有被停用。
-
-**確認**:執行記錄連續幾次都是 200。
+Render 免費方案閒置 15 分鐘會休眠。router-backend 整台共用一個保活(每 10 分鐘打 router 的 `/health`,不碰資料庫),設定在 router-backend 的 README;mama-fufood 不用另外設排程。
 
 #### Part F. 網站(GitHub Pages 與管理後台)
 
 **F1.** 先確認是否做過:打開 `mama-fufood-web/js/config.js`,`googleClientId` 已經有值(`….apps.googleusercontent.com`)就跳到 F3。沒有的話,改 `mama-fufood-web/js/config.js`:
 
 ```js
-apiBase: "https://mama-fufood-backend.onrender.com",   // D7 的後端網址,結尾不要斜線
+apiBase: "https://router-backend-3hl2.onrender.com/mama-fufood",   // 後端網址,結尾不要斜線
 googleClientId: "B7 的 Web Client ID",
 ```
 
@@ -378,7 +332,7 @@ googleClientId: "B7 的 Web Client ID",
 - 首頁沒有登入按鈕:`googleClientId` 是空的,或瀏覽器的擋廣告外掛擋掉了 Google 的登入元件(頁面會顯示原因)。
 - Google 的登入視窗顯示來源不符(origin mismatch):B7 的 JavaScript 來源少了 `https://beethoreven.github.io`,或多了路徑、結尾斜線。
 - 登入後顯示「連不上後端」:後端在喚醒,等一分鐘再試;一直不行就檢查 `apiBase`。
-- 瀏覽器的開發者工具出現 CORS 錯誤:Render 的 `ALLOWED_ORIGINS` 不是剛好 `https://beethoreven.github.io`。
+- 瀏覽器的開發者工具出現 CORS 錯誤:Render 的 `MAMA_FUFOOD__ALLOWED_ORIGINS` 不是剛好 `https://beethoreven.github.io`。
 
 #### Part G. App 的簽署金鑰(學一次就好)
 
@@ -436,11 +390,13 @@ KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool
 
 #### Part H. 打包與安裝到手機
 
+★ **只是要裝到手機:不用自己打包。** 每一版的安裝檔都放在 [`mama-fufood-app` 的 GitHub Release](https://github.com/beethoreven/mama-fufood-app/releases/latest),網站首頁的「下載最新版媽媽記副食品」也連到這裡。用手機的瀏覽器下載 `mama-fufood-<版本>.apk` 直接安裝(第一次會問要不要允許瀏覽器安裝 App,選允許);更新也一樣,下載新版直接安裝,資料會保留。下面是自己打包、用 USB 線安裝的做法。
+
 **H1.** 在 `mama-fufood-app/env/` 建立 `prod.json`(已經在 `.gitignore` 裡),照 `prod.example.json` 填:
 
 ```json
 {
-  "MFF_API_BASE": "https://mama-fufood-backend.onrender.com",
+  "MFF_API_BASE": "https://router-backend-3hl2.onrender.com/mama-fufood",
   "MFF_WEB_CLIENT_ID": "B7 的 Web Client ID"
 }
 ```
@@ -452,7 +408,7 @@ cd mama-fufood-app
 flutter build apk --release --dart-define-from-file=env/prod.json
 ```
 
-產出 `build/app/outputs/flutter-apk/app-release.apk`(約 76 MB),同一個資料夾還會有一份檔名帶版本號的 `mama-fufood-<版本>.apk`(例如 `mama-fufood-1.1.0.apk`),內容一樣,要留存或傳給別人時用這份。下面的安裝指令用 `app-release.apk`,它永遠是最新打包的那一版。沒有 `key.properties` 時會直接停下來並說明原因(避免不小心用除錯金鑰簽)。
+產出 `build/app/outputs/flutter-apk/app-release.apk`(約 76 MB),同一個資料夾還會有一份檔名帶版本號的 `mama-fufood-<版本>.apk`(例如 `mama-fufood-2.0.0.apk`),內容一樣,要留存或傳給別人時用這份。下面的安裝指令用 `app-release.apk`,它永遠是最新打包的那一版。沒有 `key.properties` 時會直接停下來並說明原因(避免不小心用除錯金鑰簽)。
 
 **H3. 手機打開 USB 偵錯**(Samsung 的路徑;其他廠牌名稱略有不同):**設定 → 關於手機 → 軟體資訊 → 連點「版本號碼」7 次**(會要求輸入手機的解鎖密碼)→ 回到設定,最下面多了「**開發人員選項**」→ 打開「**USB 偵錯**」。
 
@@ -478,10 +434,9 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 1. Google 同意畫面:Authorized domains 有 `beethoreven.github.io`;權限範圍有 `drive.appdata` 與 `drive.file`;狀態是 In production(或 Testing 加 Test users)。
 2. Google「網頁應用程式」用戶端的「已授權的 JavaScript 來源」有 `https://beethoreven.github.io`。
 3. Google 有兩個 Android 用戶端:除錯金鑰與正式金鑰各一個 SHA-1,套件名稱都是 `tw.com.tutorarthur.mamafufood`。
-4. Render 的 `ALLOWED_ORIGINS` = `https://beethoreven.github.io`,`GOOGLE_CLIENT_ID` = Web Client ID。
-5. 網站 `js/config.js`:`apiBase` = 後端網址、`googleClientId` = Web Client ID。
-6. App `env/prod.json`:`MFF_API_BASE` = 後端網址、`MFF_WEB_CLIENT_ID` = Web Client ID;改了要重新打包。
-7. cron-job.org 每 10 分鐘打 `/health`,失敗通知是開著的。
+4. Render 的 `router-backend` 服務:`MAMA_FUFOOD__ALLOWED_ORIGINS` = `https://beethoreven.github.io`,`MAMA_FUFOOD__GOOGLE_CLIENT_ID` = Web Client ID。
+5. 網站 `js/config.js`:`apiBase` = `https://router-backend-3hl2.onrender.com/mama-fufood`、`googleClientId` = Web Client ID。
+6. App `env/prod.json`:`MFF_API_BASE` = `https://router-backend-3hl2.onrender.com/mama-fufood`、`MFF_WEB_CLIENT_ID` = Web Client ID;改了要重新打包。
 
 #### Part J. 驗收
 
@@ -502,7 +457,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 
 #### Part K. 搬到共用後端 router-backend
 
-後端從獨立的 `mama-fufood-backend` 搬進好幾個專案共用的 [router-backend](https://github.com/beethoreven/router-backend),網址變成 `https://router-backend-3hl2.onrender.com/mama-fufood`。**資料庫不搬**:新服務連的就是 Part C 的同一個 Neon 資料庫(區域 ap-southeast-1,和 Render 同區)。程式已經在 router-backend 的 `apps/mama_fufood/`。
+後端從獨立的 `mama-fufood-backend` 搬進好幾個專案共用的 [router-backend](https://github.com/beethoreven/router-backend),網址變成 `https://router-backend-3hl2.onrender.com/mama-fufood`。**K1~K3 已經做完**(網站已改新網址;App 2.0.0 已發布到 GitHub Release),**下一步是 K4**,手機都換成 2.0.0、確認沒問題才做。從頭架設的人不用做這個 Part,Part D 已經是新的做法。**資料庫不搬**:新服務連的就是 Part C 的同一個 Neon 資料庫(區域 ap-southeast-1,和 Render 同區)。程式已經在 router-backend 的 `apps/mama_fufood/`。
 
 ★ App 的通行證與後台的登入都不會失效,前提是 K1 的 `MAMA_FUFOOD__SESSION_SECRET` 填**原本的** `SESSION_SECRET`。填了新的值,所有人都要重新登入。
 
@@ -543,25 +498,17 @@ git -C mama-fufood-web push
 **K3. App 改用新網址並發新版。** 先確認是否做過:`mama-fufood-app/env/prod.json` 的 `MFF_API_BASE` 已經是新網址,而且手機上 App 設定頁的版本是新版,就跳到 K4。
 
 1. `mama-fufood-app/env/prod.json` 的 `MFF_API_BASE` 改成 `https://router-backend-3hl2.onrender.com/mama-fufood`(結尾不要斜線)。
-2. 版號照 App README 的規則加一(只換後端網址、匯出格式沒變,所以 x 不動)。
-3. 照 Part H 的 H2 打包、H4 安裝到每一支手機。
+2. 版號升主版本號(換後端是重大修改;規則見 App README),例如 1.2.0 → 2.0.0。
+3. 照 Part H 的 H2 打包,發布到 GitHub Release,再把網站 `js/config.js` 的 `apkVersion` 改成新版本;每一支手機從網站下載安裝(或照 H4 用 USB 線安裝)。
 
 **確認**:App 打開後**還是登入狀態**,不用重新登入;App 設定 → 檢查更新 顯示「公用資料已是最新」;送一則意見回饋,管理後台看得到。
 
-**K4. 關掉舊服務(K3 的手機都確認過才做)。** 先確認是否做過:Render 上已經沒有 `mama-fufood-backend`、meta repo 裡也沒有 `mama-fufood-backend` 資料夾,而且 GitHub 上的 repo 是私人的,就做完了。
+**K4. 關掉舊服務(K3 的手機都確認過才做)。** 先確認是否做過:Render 上已經沒有 `mama-fufood-backend`,而且 GitHub 上的 repo 是私人的,就做完了。
 
-1. cron-job.org:刪掉 Part E 建的「mama-fufood 保活」工作(router-backend 有自己的保活,打的是 router 的 `/health`)。
+1. cron-job.org:刪掉舊的「mama-fufood 保活」工作(打的是舊後端的 `/health`;router-backend 有自己的保活,見 Part E)。
 2. Render:打開 `mama-fufood-backend` → **Settings** 最下面 → **Suspend Web Service**(暫停,隨時可以恢復)。觀察幾天沒問題再 **Delete Web Service**。
 3. Neon:**不要動**,新服務還在用。
-4. 從 meta repo 拿掉舊的子模組(要先做這一步,再做第 5 步;順序反過來,別人 clone meta repo 會失敗):
-
-   ```bash
-   git -C . submodule deinit -f mama-fufood-backend
-   git -C . rm -f mama-fufood-backend
-   git -C . commit -m "Remove the mama-fufood-backend submodule"
-   git -C . push
-   ```
-
+4. meta repo 的 `mama-fufood-backend` 子模組:**已經拿掉了**,跳過。(要確認:`cat .gitmodules` 沒有 `mama-fufood-backend`。第 5 步一定要在這之後做,不然別人 clone meta repo 會失敗。)
 5. GitHub:打開 `mama-fufood-backend` repo → **Settings** → 最下面 **Change repository visibility** → **Make private**。
 
 還沒更新的舊版 App 會連不上後端(檢查更新與意見回饋失敗),紀錄不受影響,更新 App 就好。
@@ -627,12 +574,12 @@ That final `git add` + `commit` cannot be skipped — without it, the submodule'
 
 ★ The go-live steps deliberately live here rather than in each subsystem's README, because they **span all three subsystems plus Google Cloud**, with cross-references that nobody could follow end to end once split apart:
 
-1. The Google Cloud "Web application" client ID → the backend's `GOOGLE_CLIENT_ID`, the website's `googleClientId` in `js/config.js`, and the app's `MFF_WEB_CLIENT_ID` in `env/prod.json` (the same value in all three places).
-2. The website's URL → the backend's `ALLOWED_ORIGINS`, the Google client's "Authorized JavaScript origins", and the Google consent screen's "Authorized domains" and links.
-3. The backend's URL → the website's `apiBase` in `js/config.js`, the app's `MFF_API_BASE` in `env/prod.json`, and the keep-alive URL on cron-job.org.
+1. The Google Cloud "Web application" client ID → router-backend's `MAMA_FUFOOD__GOOGLE_CLIENT_ID`, the website's `googleClientId` in `js/config.js`, and the app's `MFF_WEB_CLIENT_ID` in `env/prod.json` (the same value in all three places).
+2. The website's URL → router-backend's `MAMA_FUFOOD__ALLOWED_ORIGINS`, the Google client's "Authorized JavaScript origins", and the Google consent screen's "Authorized domains" and links.
+3. The backend's URL (`https://router-backend-3hl2.onrender.com/mama-fufood`) → the website's `apiBase` in `js/config.js` and the app's `MFF_API_BASE` in `env/prod.json`.
 4. The SHA-1 of the app's signing key → the Android client in Google Cloud.
 
-Follow Part 0 and Parts A–J in order; Part K moves the backend to the shared router-backend and is done once. You sign in to and configure every external service yourself; menu names on screen may differ slightly from what's written here (Google, Render and Neon redesign occasionally) — as long as the meaning matches, you're fine. Every Part ends with a "Check"; don't move on until it passes.
+For a setup from scratch, follow Part 0 and Parts A–J in order. The backend is [router-backend](https://github.com/beethoreven/router-backend), shared by several projects; the Render service itself and its keep-alive are set up per the router-backend README, and this guide only covers the settings mama-fufood adds (Part D). Part K is the move from the old standalone backend `mama-fufood-backend`; only K4 is left. You sign in to and configure every external service yourself; menu names on screen may differ slightly from what's written here (Google, Render and Neon redesign occasionally) — as long as the meaning matches, you're fine. Every Part ends with a "Check"; don't move on until it passes.
 
 #### Part 0. Before You Start
 
@@ -643,19 +590,18 @@ Follow Part 0 and Parts A–J in order; Part K moves the backend to the shared r
 | GitHub | Hosting the code; the website uses GitHub Pages | The account already set up with the SSH alias `github.com-beethoreven` |
 | Google | The Google Cloud project (sign-in and Drive); also the first admin of the admin console | Your own everyday Google account; no billing details needed |
 | Neon | Database | Sign in with GitHub |
-| Render | Backend | Sign in with GitHub (makes connecting repos easier later) |
-| cron-job.org | Waking the backend every 10 minutes | Sign up with email |
+| Render | Backend (the router-backend service) | Sign in with GitHub |
 
 **2. Prepare a safe place to record these values** (e.g. a password manager). Those marked "secret" must never be pasted into a chat or committed to git.
 
 | Value | Created in step | Goes into | Secret |
 |---|---|---|---|
 | Website URL `https://beethoreven.github.io/mama-fufood-web/` | Known in advance (set by the repo name) | Google consent screen links; origins only take `https://beethoreven.github.io` | |
-| Web Client ID (`….apps.googleusercontent.com`) | B7 | Render's `GOOGLE_CLIENT_ID`, the website's `js/config.js`, the app's `env/prod.json` | |
+| Web Client ID (`….apps.googleusercontent.com`) | B7 | Render's `MAMA_FUFOOD__GOOGLE_CLIENT_ID`, the website's `js/config.js`, the app's `env/prod.json` | |
 | SHA-1 of the debug key | B7 | The Google Cloud Android client (development) | |
-| Neon connection string | C3 | Render's `DATABASE_URL` | **Secret** |
-| `SESSION_SECRET` | D5 | Render | **Secret** |
-| Backend URL (`https://….onrender.com`) | D7 | The website's `js/config.js`, the app's `env/prod.json`, cron-job.org | |
+| Neon connection string | C3 | Render's `MAMA_FUFOOD__DATABASE_URL` | **Secret** |
+| Session key | D2 | Render's `MAMA_FUFOOD__SESSION_SECRET` | **Secret** |
+| Backend URL `https://router-backend-3hl2.onrender.com/mama-fufood` | Known in advance (the router-backend URL plus `/mama-fufood`) | The website's `js/config.js`, the app's `env/prod.json` | |
 | The signing keystore file and its password | G1 | `android/key.properties`; **must be backed up** | **Secret** |
 | SHA-1 of the release key | G4 | The Google Cloud Android client (release) | |
 
@@ -673,16 +619,16 @@ Follow Part 0 and Parts A–J in order; Part K moves the backend to the shared r
 
 #### Part A. Create the Repos and Push
 
-All four repos are **Public**: on GitHub's free plan, Pages can only publish from a public repo. Secrets (the database connection string, the session key, the signing key) all go through environment variables or `.gitignore`, so nothing leaks just because the repos are public. Spec and design documents stay on the local machine only and never enter git (this repo's `.gitignore` is an allowlist).
+The three repos (`mama-fufood`, `mama-fufood-app`, `mama-fufood-web`) are all **Public**: on GitHub's free plan, Pages can only publish from a public repo. The fourth submodule, `router-backend`, is a shared repo that already exists; it isn't created here, and its changes are pushed per its own README. Secrets (the database connection string, the session key, the signing key) all go through environment variables or `.gitignore`, so nothing leaks just because the repos are public. Spec and design documents stay on the local machine only and never enter git (this repo's `.gitignore` is an allowlist).
 
 ★ The GitHub SSH alias is **`github.com-beethoreven`**, not plain `github.com`. Using the wrong one means the push fails.
 
 ★ Every command below names its repo with `git -C <folder>`, and **all of them run from the meta repo's folder (`mama-fufood/`)** — no `cd` back and forth, so nothing gets configured or pushed from the wrong folder. Every step starts with "Check whether it's done"; if it is, move on to the next step.
 
-**A1. Create four empty public repos on GitHub**
+**A1. Create three empty public repos on GitHub**
 
-- Check whether it's done: open `https://github.com/beethoreven/mama-fufood`, `…/mama-fufood-app`, `…/mama-fufood-backend` and `…/mama-fufood-web` in a browser; if all four exist, skip this step.
-- How: go to <https://github.com/new> and create these four repos. Choose owner `beethoreven` and visibility **Public**; do **not** tick adding a README, .gitignore or license, or the first push will conflict.
+- Check whether it's done: open `https://github.com/beethoreven/mama-fufood`, `…/mama-fufood-app` and `…/mama-fufood-web` in a browser; if all three exist, skip this step.
+- How: go to <https://github.com/new> and create these three repos. Choose owner `beethoreven` and visibility **Public**; do **not** tick adding a README, .gitignore or license, or the first push will conflict.
 
 **A2. Commit locally**
 
@@ -691,25 +637,22 @@ All four repos are **Public**: on GitHub's free plan, Pages can only publish fro
   ```bash
   git log --oneline -1
   git -C mama-fufood-app log --oneline -1
-  git -C mama-fufood-backend log --oneline -1
   git -C mama-fufood-web log --oneline -1
   ```
 
-  If all four print a commit and `cat .gitmodules` lists the three submodules, skip this step.
-- How: commit each of the three subprojects first, then attach them as submodules in the meta repo and commit (the submodule folders are already git repos, so `git submodule add` attaches the existing repos instead of downloading them again; `.gitmodules` uses https URLs so others can clone):
+  If all three print a commit and `cat .gitmodules` lists the three submodules `mama-fufood-app`, `mama-fufood-web` and `router-backend`, skip this step.
+- How: commit each of the two subprojects first, then attach them as submodules in the meta repo and commit (the submodule folders are already git repos, so `git submodule add` attaches the existing repos instead of downloading them again; `.gitmodules` uses https URLs so others can clone):
 
   ```bash
   git -C mama-fufood-app add -A
   git -C mama-fufood-app commit -m "Initial commit"
-  git -C mama-fufood-backend add -A
-  git -C mama-fufood-backend commit -m "Initial commit"
   git -C mama-fufood-web add -A
   git -C mama-fufood-web commit -m "Initial commit"
   git submodule add https://github.com/beethoreven/mama-fufood-app.git mama-fufood-app
-  git submodule add https://github.com/beethoreven/mama-fufood-backend.git mama-fufood-backend
   git submodule add https://github.com/beethoreven/mama-fufood-web.git mama-fufood-web
+  git submodule add https://github.com/beethoreven/router-backend.git router-backend
   git add -A
-  git commit -m "Add the app, backend and web repos as submodules"
+  git commit -m "Add the app, web and router-backend repos as submodules"
   ```
 
 **A3. Set where each repo pushes to (remote)**
@@ -719,23 +662,21 @@ All four repos are **Public**: on GitHub's free plan, Pages can only publish fro
   ```bash
   git remote -v
   git -C mama-fufood-app remote -v
-  git -C mama-fufood-backend remote -v
   git -C mama-fufood-web remote -v
   ```
 
-  Each repo's `origin` URL must end with **its own name**: the meta repo's is `…/mama-fufood.git`, `mama-fufood-app`'s is `…/mama-fufood-app.git`, and so on. If all four are right, skip this step.
+  Each repo's `origin` URL must end with **its own name**: the meta repo's is `…/mama-fufood.git`, `mama-fufood-app`'s is `…/mama-fufood-app.git`, and so on. If all three are right, skip this step.
 - For any repo without an `origin`, add it:
 
   ```bash
   git remote add origin git@github.com-beethoreven:beethoreven/mama-fufood.git
   git -C mama-fufood-app remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-app.git
-  git -C mama-fufood-backend remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-backend.git
   git -C mama-fufood-web remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-web.git
   ```
 
 - For a repo whose `origin` exists but points to the wrong URL: use `remote set-url` instead of `remote add` on that line.
 
-**A4. Push (the order can't be reversed: the three subprojects first, the meta repo last)**
+**A4. Push (the order can't be reversed: the subprojects first, the meta repo last)**
 
 The meta repo records the submodules' commits; pushing it first would point at commits that don't exist on GitHub yet.
 
@@ -746,17 +687,16 @@ The meta repo records the submodules' commits; pushing it first would point at c
   git -C mama-fufood-app log -1 --format=%H
   ```
 
-  The hash in front of `refs/heads/main` on the first line must match the second line; compare the other three repos the same way (for the meta repo, use `git log -1 --format=%H`). If they all match, skip this step.
+  The hash in front of `refs/heads/main` on the first line must match the second line; compare `mama-fufood-web` and the meta repo the same way (for the meta repo, use `git log -1 --format=%H`). If they all match, skip this step.
 - How:
 
   ```bash
   git -C mama-fufood-app push -u origin main
-  git -C mama-fufood-backend push -u origin main
   git -C mama-fufood-web push -u origin main
   git push -u origin main
   ```
 
-**Check**: all four repos show their own files on GitHub; in the `mama-fufood` repo the three submodules appear as "folder name @ a commit hash" and can be clicked through.
+**Check**: all three repos show their own files on GitHub; in the `mama-fufood` repo the three submodules appear as "folder name @ a commit hash" and can be clicked through.
 
 **If something was pushed to the wrong repo**: when a GitHub repo received another repo's content (e.g. a wrong URL in A3), first fix the URL with `remote set-url`, then overwrite that repo with `git -C <folder> push --force -u origin main`. A force push replaces what that branch on GitHub held before, so only use it when you're sure that content was pushed by mistake.
 
@@ -858,85 +798,46 @@ Keep everything else at the defaults → **Create project**.
 
 **C3. Get the connection string.** Project home → **Connect** → turn on **Connection pooling** → copy the connection string. Make sure it looks like `postgresql://…@ep-…-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`: the host contains **`-pooler`**, the region is **ap-southeast-1**, and it ends with **`sslmode=require`**.
 
-**C4.** This string contains the database password: paste it only into Render's environment variables — never into a chat, never into git.
+**C4.** This string contains the database password: paste it only into Render's environment variables (`MAMA_FUFOOD__DATABASE_URL` in D2) — never into a chat, never into git. Each project needs its own database: router-backend refuses to start when two projects share a database connection string.
 
-**Check**: the `mama-fufood` project appears in Neon's project list with the Singapore region. No need to create tables yourself — the backend creates them on its first start.
+**Check**: the `mama-fufood` project appears in Neon's project list with the Singapore region. No need to create tables yourself — the backend creates them the first time it connects.
 
-#### Part D. Render Backend
+#### Part D. Render Backend (mama-fufood on router-backend)
 
-**D1.** Open <https://dashboard.render.com/> and sign in with GitHub.
+The backend code lives in router-backend's `apps/mama_fufood/` and deploys with router-backend on the Render service `router-backend` (URL `https://router-backend-3hl2.onrender.com`, with mama-fufood mounted under `/mama-fufood`). The Render service itself (workspace, creating the service, free hours, keep-alive) is covered by the router-backend README; this Part only adds mama-fufood's environment variables.
 
-**D2. Choose a workspace.** The free 750 hours per month are **shared across the whole workspace**, and once they run out, **every** free service in that workspace is suspended until the start of the next month ([Render docs](https://render.com/docs/free)). This backend is kept awake around the clock and uses about 744 hours a month — nearly the whole allowance — so the same workspace can't hold any other free service that also needs to stay awake.
+**D1.** First check whether it's done: if `https://router-backend-3hl2.onrender.com/mama-fufood/ready` shows `"ok": true` and `"database_configured": true`, skip to Part E.
 
-- If you can create a new workspace: the workspace menu at the top left → **New workspace** → name it e.g. `mama-fufood`, on the free plan.
-- If a new workspace can't use the free plan (Hobby shows "limit reached", meaning this account has used up its free workspaces), or you don't want a new one, use an existing workspace: first suspend its other free services (the service page → **Settings** → **Suspend Web Service** at the bottom; press **Resume** when you need it again) and turn off their keep-alives too. Removing the keep-alive without suspending isn't enough: each wake-up keeps a service up for at least 15 minutes, a 31-day month leaves only 6 hours, and running out suspends this backend as well.
-
-**D3. Create the Web Service.** Make sure the workspace chosen in D2 is selected at the top left → **New → Web Service** → Git Provider **GitHub**. The first time, Render asks for access to GitHub: preferably choose **Only select repositories** and tick `mama-fufood-backend` → back in Render, pick `mama-fufood-backend`. If `mama-fufood-backend` isn't in the list (this workspace was authorized before with only other repos ticked): press **Configure GitHub** below the list (or on GitHub, **Settings → Applications → Render → Configure**), add `mama-fufood-backend`, then come back.
-
-**D4. Settings:**
-
-| Field | Value |
-|---|---|
-| Name | `mama-fufood-backend` (the URL becomes `https://mama-fufood-backend.onrender.com`; if the name is taken, pick another and update every place that uses the backend URL) |
-| Language | **Python 3** (the version is read from the repo's `.python-version`, 3.15.1) |
-| Branch | `main` |
-| Region | **Singapore** |
-| Root Directory | Leave empty |
-| Build Command | `pip install -r requirements.txt` |
-| Start Command | `gunicorn app:app --workers 1 --threads 8 --timeout 120` (**must be a single worker** — see the backend README for why) |
-| Instance Type | **Free** |
-
-**D5. Environment variables** (on the same page, **Environment Variables → Add Environment Variable**; full descriptions of each variable are in Part D of the backend README):
+**D2. Environment variables.** Open <https://dashboard.render.com/> (sign in with GitHub) → the `router-backend` service → **Environment → Add Environment Variable** and add these five (the names start with `MAMA_FUFOOD__`, **two underscores**; **no quotes** around values):
 
 | Name | Value |
 |---|---|
-| `DATABASE_URL` | The Neon connection string from C3 |
-| `GOOGLE_CLIENT_ID` | The Web Client ID from B7 |
-| `ALLOWED_ORIGINS` | `https://beethoreven.github.io` (**no trailing slash**, no path) |
-| `FIRST_ADMIN_EMAIL` | The Google account email of the first admin |
-| `SESSION_SECRET` | A random string: generate it in the terminal with `python3 -c "import secrets; print(secrets.token_hex(32))"` |
+| `MAMA_FUFOOD__DATABASE_URL` | The Neon connection string from C3 |
+| `MAMA_FUFOOD__GOOGLE_CLIENT_ID` | The Web Client ID from B7 |
+| `MAMA_FUFOOD__SESSION_SECRET` | A random string: generate it in the terminal with `python3 -c "import secrets; print(secrets.token_hex(32))"`. **Don't change it once people use the app**: a new value invalidates every app pass and admin sign-in, and everyone has to sign in again |
+| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://beethoreven.github.io` (**no trailing slash**, no path) |
+| `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` | The Google account email of the first admin |
 
-**D6. Advanced:** set Health Check Path to `/health` (it doesn't touch the database; Render uses it to confirm the service came up during deploys); leave Auto-Deploy at its default (pushing to `main` deploys automatically).
-
-**D7.** Press **Deploy Web Service** and watch the deploy log on screen — about 2–5 minutes. Once the deploy succeeds, the URL is shown at the top of the service page — **write it down**.
+After **Save**, Render redeploys automatically (about 2–5 minutes).
 
 **Check:**
-- Open `https://mama-fufood-backend.onrender.com/health` (with your URL) in a browser and see `"ok": true`.
-- Open `/ready` and see `"ok": true`, with the food list and unit versions (`20261023000000`) under `"cache"`. The first time may take around half a minute (the database is waking up and the backend is creating tables); if it returns 503, wait a moment and refresh. On first start the backend automatically creates the tables and seeds the first food list (11 groups, 105 foods) and units.
+- `https://router-backend-3hl2.onrender.com/ready`: `"mama-fufood"` under `"apps"` has `"loaded": true`.
+- `https://router-backend-3hl2.onrender.com/mama-fufood/ready`: `"ok": true`, with the food-list and unit versions under `"cache"`. The first visit may be 503 (loading starts on the first request, the database is waking up, and the first connection creates the tables and seeds the first food list and units); wait half a minute and reload.
 
 **Common problems:**
-- The deploy log says Python 3.15.1 can't be found: Render doesn't offer that version yet. Change `.python-version` to the newest version Render has, note the reason next to it, and push to redeploy.
-- `/ready` stays at 503 and `database_last_ok` stays `null`: first look at `database_configured` in `/ready` — `false` means Render isn't reading `DATABASE_URL`; if it's `true`, search Render's **Logs** for the public-data cache lines (公用資料快取): a load-failure line every 30 seconds means `DATABASE_URL` was pasted wrong (extra spaces, missing `sslmode=require`) or the Neon project is suspended; no "started loading in the background" line (開始在背景載入) at all means an older backend is still deployed — make sure the latest commit has been deployed.
+- The deploy log says "… have the same value": two projects share a database connection string or session key, and the new version won't go live; "… wrapped in quotes" means a value has quotes.
+- `/mama-fufood/ready` stays at 503 and `database_last_ok` stays `null`: if `database_configured` is `false`, Render isn't reading `MAMA_FUFOOD__DATABASE_URL` (misspelled name, one underscore missing); if it's `true`, search Render's **Logs** for the public-data cache lines (公用資料快取): a load-failure line every 30 seconds means the connection string was pasted wrong (extra spaces, missing `sslmode=require`) or the Neon project is suspended.
 
-#### Part E. cron-job.org (Keep-Alive)
+#### Part E. Keep-Alive (Nothing to Set Up)
 
-Render's free tier sleeps after 15 minutes idle; hitting `/health` every 10 minutes keeps it awake. `/health` doesn't touch the database, so Neon can still sleep and the free plan's hours aren't used up by the keep-alive.
-
-**E1.** Open <https://cron-job.org/>, sign up and sign in.
-
-**E2. Create cronjob:**
-
-| Field | Value |
-|---|---|
-| Title | `mama-fufood keep-alive` |
-| URL | `https://mama-fufood-backend.onrender.com/health` (your backend URL plus `/health`) |
-| Execution schedule | Every 10 minutes |
-| Notifications | Turn on "notify on failed execution", sent to your email |
-
-**Create** to save.
-
-**E3.** Run it once manually from the job's detail page (Test run) and expand the run history: the status must be **200**.
-
-★ Measured: a Render cold start takes **32.4 seconds**, while cron-job.org's free plan **closes the connection after 30 seconds**, and **auto-disables a job after more than 25 consecutive failures**. So the one run that hits a sleeping service may be recorded as a failure (but it has already woken the service, so the next run succeeds); as long as failure emails don't keep coming, all is well. If you do get repeated failure emails, first open `/health` to confirm the backend is alive, then check on cron-job.org that the job hasn't been disabled.
-
-**Check**: several consecutive runs in the history show 200.
+Render's free tier sleeps after 15 minutes idle. router-backend has one keep-alive for the whole service (hitting the router's `/health` every 10 minutes, without touching the database), set up per the router-backend README; mama-fufood needs no schedule of its own.
 
 #### Part F. Website (GitHub Pages and the Admin Console)
 
 **F1.** First check whether it's done: open `mama-fufood-web/js/config.js`; if `googleClientId` already has a value (`….apps.googleusercontent.com`), skip to F3. Otherwise edit `mama-fufood-web/js/config.js`:
 
 ```js
-apiBase: "https://mama-fufood-backend.onrender.com",   // the backend URL from D7, no trailing slash
+apiBase: "https://router-backend-3hl2.onrender.com/mama-fufood",   // the backend URL, no trailing slash
 googleClientId: "the Web Client ID from B7",
 ```
 
@@ -955,7 +856,7 @@ Then commit and push. Fill in only the Client ID; the "Client secret" (starting 
 - No sign-in button on the home page: `googleClientId` is empty, or an ad-blocking extension blocked Google's sign-in script (the page says so).
 - Google's sign-in window reports an origin mismatch: B7's JavaScript origins are missing `https://beethoreven.github.io`, or have a path or trailing slash added.
 - "連不上後端" (can't reach the backend) after signing in: the backend is waking up — wait a minute and retry; if it never works, check `apiBase`.
-- A CORS error in the browser's developer tools: Render's `ALLOWED_ORIGINS` isn't exactly `https://beethoreven.github.io`.
+- A CORS error in the browser's developer tools: Render's `MAMA_FUFOOD__ALLOWED_ORIGINS` isn't exactly `https://beethoreven.github.io`.
 
 #### Part G. The App's Signing Key (Learn It Once)
 
@@ -1013,11 +914,13 @@ KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool
 
 #### Part H. Build and Install on a Phone
 
+★ **Just installing on a phone: no need to build.** Every version's APK is on the [`mama-fufood-app` GitHub Releases](https://github.com/beethoreven/mama-fufood-app/releases/latest), and the website's "下載最新版媽媽記副食品" (download the latest version) link points there. Download `mama-fufood-<version>.apk` in the phone's browser and install it (the first time, the phone asks whether to allow the browser to install apps — allow it); updates work the same way, and the data is kept. Below is how to build it yourself and install over USB.
+
 **H1.** Create `prod.json` in `mama-fufood-app/env/` (already in `.gitignore`), following `prod.example.json`:
 
 ```json
 {
-  "MFF_API_BASE": "https://mama-fufood-backend.onrender.com",
+  "MFF_API_BASE": "https://router-backend-3hl2.onrender.com/mama-fufood",
   "MFF_WEB_CLIENT_ID": "the Web Client ID from B7"
 }
 ```
@@ -1029,7 +932,7 @@ cd mama-fufood-app
 flutter build apk --release --dart-define-from-file=env/prod.json
 ```
 
-The output is `build/app/outputs/flutter-apk/app-release.apk` (about 76 MB). The same folder also gets an identical copy whose name carries the version, `mama-fufood-<version>.apk` (for example `mama-fufood-1.1.0.apk`); use that one when keeping or sending a build. The install command below uses `app-release.apk`, which is always the latest build. Without `key.properties` the build stops and explains why (so it can't accidentally be signed with the debug key).
+The output is `build/app/outputs/flutter-apk/app-release.apk` (about 76 MB). The same folder also gets an identical copy whose name carries the version, `mama-fufood-<version>.apk` (for example `mama-fufood-2.0.0.apk`); use that one when keeping or sending a build. The install command below uses `app-release.apk`, which is always the latest build. Without `key.properties` the build stops and explains why (so it can't accidentally be signed with the debug key).
 
 **H3. Turn on USB debugging on the phone** (Samsung's path; other brands name things slightly differently): **Settings → About phone → Software information → tap "Build number" 7 times** (it asks for the phone's unlock code) → back in Settings, "**Developer options**" now appears at the bottom → turn on "**USB debugging**".
 
@@ -1055,10 +958,9 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 1. Google consent screen: Authorized domains include `beethoreven.github.io`; the scopes include `drive.appdata` and `drive.file`; the status is In production (or Testing plus Test users).
 2. The Google "Web application" client's "Authorized JavaScript origins" include `https://beethoreven.github.io`.
 3. Google has two Android clients: one SHA-1 each for the debug key and the release key, both with package name `tw.com.tutorarthur.mamafufood`.
-4. Render's `ALLOWED_ORIGINS` = `https://beethoreven.github.io`, `GOOGLE_CLIENT_ID` = the Web Client ID.
-5. The website's `js/config.js`: `apiBase` = the backend URL, `googleClientId` = the Web Client ID.
-6. The app's `env/prod.json`: `MFF_API_BASE` = the backend URL, `MFF_WEB_CLIENT_ID` = the Web Client ID; rebuild after any change.
-7. cron-job.org hits `/health` every 10 minutes, with failure notifications on.
+4. The Render service `router-backend`: `MAMA_FUFOOD__ALLOWED_ORIGINS` = `https://beethoreven.github.io`, `MAMA_FUFOOD__GOOGLE_CLIENT_ID` = the Web Client ID.
+5. The website's `js/config.js`: `apiBase` = `https://router-backend-3hl2.onrender.com/mama-fufood`, `googleClientId` = the Web Client ID.
+6. The app's `env/prod.json`: `MFF_API_BASE` = `https://router-backend-3hl2.onrender.com/mama-fufood`, `MFF_WEB_CLIENT_ID` = the Web Client ID; rebuild after any change.
 
 #### Part J. Acceptance
 
@@ -1079,7 +981,7 @@ If any step doesn't match, send feedback from the app with "遇到問題" (ran i
 
 #### Part K. Move to the shared router-backend
 
-The backend moves from the standalone `mama-fufood-backend` into [router-backend](https://github.com/beethoreven/router-backend), a service shared by several projects; the URL becomes `https://router-backend-3hl2.onrender.com/mama-fufood`. **The database doesn't move**: the new service connects to the same Neon database from Part C (region ap-southeast-1, the same as Render). The code is already in router-backend's `apps/mama_fufood/`.
+The backend moves from the standalone `mama-fufood-backend` into [router-backend](https://github.com/beethoreven/router-backend), a service shared by several projects; the URL becomes `https://router-backend-3hl2.onrender.com/mama-fufood`. **K1–K3 are done** (the website uses the new URL; app 2.0.0 is published on GitHub Releases), and **the next step is K4**, once every phone runs 2.0.0 and works. A setup from scratch skips this Part — Part D already describes the new way. **The database doesn't move**: the new service connects to the same Neon database from Part C (region ap-southeast-1, the same as Render). The code is already in router-backend's `apps/mama_fufood/`.
 
 ★ App passes and admin sign-ins stay valid, as long as `MAMA_FUFOOD__SESSION_SECRET` in K1 is the **original** `SESSION_SECRET`. With a new value, everyone has to sign in again.
 
@@ -1120,25 +1022,17 @@ git -C mama-fufood-web push
 **K3. Point the app at the new URL and release a new version.** First check whether it's done: if `MFF_API_BASE` in `mama-fufood-app/env/prod.json` is already the new URL and the app's settings page on the phone shows the new version, skip to K4.
 
 1. Change `MFF_API_BASE` in `mama-fufood-app/env/prod.json` to `https://router-backend-3hl2.onrender.com/mama-fufood` (no trailing slash).
-2. Bump the version per the app README's rules (only the backend URL changes and the export format doesn't, so x stays).
-3. Build with H2 and install on every phone with H4 from Part H.
+2. Bump the major version (switching backends is a major change; the rules are in the app README), e.g. 1.2.0 → 2.0.0.
+3. Build with H2 from Part H, publish it on GitHub Releases, then set `apkVersion` in the website's `js/config.js` to the new version; every phone downloads and installs it from the website (or installs over USB with H4).
 
 **Check**: the app opens **still signed in**, with no new sign-in; App settings → check for updates says the public data is up to date; a feedback submission shows up in the admin console.
 
-**K4. Shut down the old service (only after every phone passed K3).** First check whether it's done: if `mama-fufood-backend` is gone from Render, the meta repo has no `mama-fufood-backend` folder, and the GitHub repo is private, you're done.
+**K4. Shut down the old service (only after every phone passed K3).** First check whether it's done: if `mama-fufood-backend` is gone from Render and the GitHub repo is private, you're done.
 
-1. cron-job.org: delete the "mama-fufood 保活" job from Part E (router-backend has its own keep-alive on the router's `/health`).
+1. cron-job.org: delete the old "mama-fufood 保活" job (it hits the old backend's `/health`; router-backend has its own keep-alive — see Part E).
 2. Render: open `mama-fufood-backend` → bottom of **Settings** → **Suspend Web Service** (can be resumed any time). After a few days without problems, **Delete Web Service**.
 3. Neon: **leave it alone**; the new service uses it.
-4. Remove the old submodule from the meta repo (do this before step 5; the other way round, cloning the meta repo fails for others):
-
-   ```bash
-   git -C . submodule deinit -f mama-fufood-backend
-   git -C . rm -f mama-fufood-backend
-   git -C . commit -m "Remove the mama-fufood-backend submodule"
-   git -C . push
-   ```
-
+4. The meta repo's `mama-fufood-backend` submodule: **already removed** — skip. (To confirm: `cat .gitmodules` has no `mama-fufood-backend`. Step 5 must come after this, or cloning the meta repo fails for others.)
 5. GitHub: open the `mama-fufood-backend` repo → **Settings** → bottom **Change repository visibility** → **Make private**.
 
 Old app versions that weren't updated can no longer reach the backend (update checks and feedback fail); records aren't affected, and updating the app fixes it.
