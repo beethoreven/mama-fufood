@@ -319,6 +319,8 @@ googleClientId: "B7 的 Web Client ID",
 
 然後 commit、push。只填「用戶端 ID」;B7 畫面上另外顯示的「用戶端密鑰」(`GOCSPX-` 開頭)這個專案用不到,不要填進任何檔案。
 
+後端如果不是上面這個主機,`mama-fufood-web/index.html` 與 `admin.html` 開頭的內容安全政策(`Content-Security-Policy`)裡,`connect-src` 的後端主機也要改成一樣的,不然瀏覽器會擋下網站對後端的請求。
+
 **F2.** GitHub Pages 已在 B3 開啟,這裡不用再做;F1 推送後一兩分鐘,網站就會換成新的設定。
 
 **F3. 確認:**
@@ -842,6 +844,8 @@ googleClientId: "the Web Client ID from B7",
 ```
 
 Then commit and push. Fill in only the Client ID; the "Client secret" (starting with `GOCSPX-`) that B7 also shows isn't used by this project — don't put it in any file.
+
+If your backend is on a different host than the one above, change the backend host in `connect-src` of the Content Security Policy at the top of `mama-fufood-web/index.html` and `admin.html` to match, or the browser blocks the site's requests to the backend.
 
 **F2.** GitHub Pages was already turned on in B3, so nothing to do here; a minute or two after F1 is pushed, the site picks up the new settings.
 
