@@ -272,7 +272,7 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 
 其他維持預設 → **Create project**。
 
-**C3. 取得連線字串。** 專案首頁 → **Connect** → 打開 **Connection pooling** → 複製連線字串。確認它長得像 `postgresql://…@ep-…-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`:主機名稱有 **`-pooler`**、區域是 **ap-southeast-1**、最後有 **`sslmode=require`**。
+**C3. 取得連線字串。** 專案首頁 → **Connect** → 打開 **Connection pooling** → 用連線字串旁邊的複製按鈕複製,之後照原樣貼上,不要自己加或刪參數。確認它長得像 `postgresql://…@ep-…-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require`:主機名稱有 **`-pooler`**、區域是 **ap-southeast-1**、問號後面有 **`sslmode=require`**;Neon 現在的字串最後還會接 **`&channel_binding=require`**,這是正常的。
 
 **C4.** 這串含有資料庫密碼:只貼到 Render 的環境變數(D2 的 `MAMA_FUFOOD__DATABASE_URL`),不要貼到聊天、不要進 git。每個專案要用自己的資料庫:router-backend 發現兩個專案的資料庫連線字串一樣時會拒絕啟動。
 
@@ -302,7 +302,7 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 
 **常見問題:**
 - 部署記錄出現「… have the same value」:兩個專案的資料庫連線字串或 session 金鑰填成一樣的,服務不會換成新版;「… wrapped in quotes」:值多了引號。
-- `/mama-fufood/ready` 一直是 503、`database_last_ok` 一直是 `null`:`database_configured` 是 `false` 就是 Render 沒讀到 `MAMA_FUFOOD__DATABASE_URL`(名稱拼錯、少一個底線);是 `true` 就到 Render 的 **Logs** 找「公用資料快取」:每 30 秒一行「載入失敗」代表連線字串貼錯(多了空白、少了 `sslmode=require`)或 Neon 專案被暫停。
+- `/mama-fufood/ready` 一直是 503、`database_last_ok` 一直是 `null`:`database_configured` 是 `false` 就是 Render 沒讀到 `MAMA_FUFOOD__DATABASE_URL`(名稱拼錯、少一個底線);是 `true` 就到 Render 的 **Logs** 搜尋 `public data cache`:每 30 秒會有一行 `[mama-fufood] public data cache failed to load, retrying in 30 s: <例外類型>`,看最後那個字:`ProgrammingError` 是連線字串的格式不對(例如兩個參數黏在一起,或參數名稱拼錯);`OperationalError` 是密碼或主機不對、Neon 專案被暫停,或網路問題。
 
 #### Part E. 保活(不用另外設)
 
@@ -798,7 +798,7 @@ Why publish: in Testing status, grants for anything beyond name, email and profi
 
 Keep everything else at the defaults → **Create project**.
 
-**C3. Get the connection string.** Project home → **Connect** → turn on **Connection pooling** → copy the connection string. Make sure it looks like `postgresql://…@ep-…-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`: the host contains **`-pooler`**, the region is **ap-southeast-1**, and it ends with **`sslmode=require`**.
+**C3. Get the connection string.** Project home → **Connect** → turn on **Connection pooling** → copy the connection string with the copy button next to it, and later paste it exactly as is — don't add or remove parameters. Make sure it looks like `postgresql://…@ep-…-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require`: the host contains **`-pooler`**, the region is **ap-southeast-1**, and **`sslmode=require`** comes after the question mark; Neon's string now also ends with **`&channel_binding=require`**, which is expected.
 
 **C4.** This string contains the database password: paste it only into Render's environment variables (`MAMA_FUFOOD__DATABASE_URL` in D2) — never into a chat, never into git. Each project needs its own database: router-backend refuses to start when two projects share a database connection string.
 
@@ -828,7 +828,7 @@ After **Save**, Render redeploys automatically (about 2–5 minutes).
 
 **Common problems:**
 - The deploy log says "… have the same value": two projects share a database connection string or session key, and the new version won't go live; "… wrapped in quotes" means a value has quotes.
-- `/mama-fufood/ready` stays at 503 and `database_last_ok` stays `null`: if `database_configured` is `false`, Render isn't reading `MAMA_FUFOOD__DATABASE_URL` (misspelled name, one underscore missing); if it's `true`, search Render's **Logs** for the public-data cache lines (公用資料快取): a load-failure line every 30 seconds means the connection string was pasted wrong (extra spaces, missing `sslmode=require`) or the Neon project is suspended.
+- `/mama-fufood/ready` stays at 503 and `database_last_ok` stays `null`: if `database_configured` is `false`, Render isn't reading `MAMA_FUFOOD__DATABASE_URL` (misspelled name, one underscore missing); if it's `true`, search Render's **Logs** for `public data cache`: every 30 seconds there is a line `[mama-fufood] public data cache failed to load, retrying in 30 s: <exception type>`, and the last word tells you why: `ProgrammingError` means the connection string is malformed (for example, two parameters run together, or a misspelled parameter name); `OperationalError` means a wrong password or host, a suspended Neon project, or a network problem.
 
 #### Part E. Keep-Alive (Nothing to Set Up)
 
