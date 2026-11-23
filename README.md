@@ -51,7 +51,7 @@ git commit -m "Update mama-fufood-app submodule pointer"
 ★ 上線步驟刻意放在這裡而不是各子系統的 README,因為它**跨越三個子系統與 Google Cloud**,有幾條交叉引用,拆開之後就沒有人能照著做完:
 
 1. Google Cloud「網頁應用程式」用戶端 ID → router-backend 的 `MAMA_FUFOOD__GOOGLE_CLIENT_ID`、網站 `js/config.js` 的 `googleClientId`、App `env/prod.json` 的 `MFF_WEB_CLIENT_ID`(三個地方是同一個值)。
-2. 網站的網址 → router-backend 的 `MAMA_FUFOOD__ALLOWED_ORIGINS`、Google 用戶端的「已授權的 JavaScript 來源」、Google 同意畫面的「已授權網域」與連結。網站原本在 `beethoreven.github.io` 底下,搬到 `mama-fufood` 組織(`mama-fufood.github.io`)之後,舊網址會自動轉到新網址;舊的來源 `https://beethoreven.github.io` 暫時還留在 `MAMA_FUFOOD__ALLOWED_ORIGINS` 與 Google 的設定裡,確定沒有地方再用舊網址之後再拿掉。
+2. 網站的網址 → router-backend 的 `MAMA_FUFOOD__ALLOWED_ORIGINS`、Google 用戶端的「已授權的 JavaScript 來源」、Google 同意畫面的「已授權網域」與連結。
 3. 後端的網址(`https://router-backend-3hl2.onrender.com/mama-fufood`)→ 網站 `js/config.js` 的 `apiBase`、App `env/prod.json` 的 `MFF_API_BASE`。
 4. App 簽署金鑰的 SHA-1 → Google Cloud 的 Android 用戶端。
 
@@ -291,7 +291,7 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 | `MAMA_FUFOOD__DATABASE_URL` | C3 的 Neon 連線字串 |
 | `MAMA_FUFOOD__GOOGLE_CLIENT_ID` | B7 的 Web Client ID |
 | `MAMA_FUFOOD__SESSION_SECRET` | 一串亂數,在終端機執行 `python3 -c "import secrets; print(secrets.token_hex(32))"` 產生。**已經有人在用時不能換**,換了 App 的通行證和後台的登入全部失效,所有人都要重新登入 |
-| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io`(**結尾不要斜線**,不含路徑;網站搬家前的舊網址 `https://beethoreven.github.io` 可以一起列,用逗號隔開,確定不再使用後拿掉) |
+| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io`(**結尾不要斜線**,不含路徑) |
 | `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` | 你要當第一位管理員的 Google 帳號 Email |
 
 **Save** 之後 Render 會自動重新部署,約 2~5 分鐘。
@@ -474,7 +474,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 | `MAMA_FUFOOD__DATABASE_URL` | `mama-fufood-backend` 的 `DATABASE_URL`(同一個) |
 | `MAMA_FUFOOD__GOOGLE_CLIENT_ID` | `mama-fufood-backend` 的 `GOOGLE_CLIENT_ID` |
 | `MAMA_FUFOOD__SESSION_SECRET` | `mama-fufood-backend` 的 `SESSION_SECRET`(**一定要同一個**) |
-| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io`(網站搬家前的舊網址 `https://beethoreven.github.io` 可以一起列,用逗號隔開) |
+| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io` |
 | `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` | `mama-fufood-backend` 的 `FIRST_ADMIN_EMAIL` |
 
 **Save** 之後 Render 會自動重新部署,約 2~5 分鐘。
@@ -577,7 +577,7 @@ That final `git add` + `commit` cannot be skipped — without it, the submodule'
 ★ The go-live steps deliberately live here rather than in each subsystem's README, because they **span all three subsystems plus Google Cloud**, with cross-references that nobody could follow end to end once split apart:
 
 1. The Google Cloud "Web application" client ID → router-backend's `MAMA_FUFOOD__GOOGLE_CLIENT_ID`, the website's `googleClientId` in `js/config.js`, and the app's `MFF_WEB_CLIENT_ID` in `env/prod.json` (the same value in all three places).
-2. The website's URL → router-backend's `MAMA_FUFOOD__ALLOWED_ORIGINS`, the Google client's "Authorized JavaScript origins", and the Google consent screen's "Authorized domains" and links. The site used to live under `beethoreven.github.io`; since moving to the `mama-fufood` organization (`mama-fufood.github.io`), old URLs redirect to the new ones. The old origin `https://beethoreven.github.io` stays in `MAMA_FUFOOD__ALLOWED_ORIGINS` and the Google settings for now, and is removed once nothing uses the old URLs any more.
+2. The website's URL → router-backend's `MAMA_FUFOOD__ALLOWED_ORIGINS`, the Google client's "Authorized JavaScript origins", and the Google consent screen's "Authorized domains" and links.
 3. The backend's URL (`https://router-backend-3hl2.onrender.com/mama-fufood`) → the website's `apiBase` in `js/config.js` and the app's `MFF_API_BASE` in `env/prod.json`.
 4. The SHA-1 of the app's signing key → the Android client in Google Cloud.
 
@@ -817,7 +817,7 @@ The backend code lives in router-backend's `apps/mama_fufood/` and deploys with 
 | `MAMA_FUFOOD__DATABASE_URL` | The Neon connection string from C3 |
 | `MAMA_FUFOOD__GOOGLE_CLIENT_ID` | The Web Client ID from B7 |
 | `MAMA_FUFOOD__SESSION_SECRET` | A random string: generate it in the terminal with `python3 -c "import secrets; print(secrets.token_hex(32))"`. **Don't change it once people use the app**: a new value invalidates every app pass and admin sign-in, and everyone has to sign in again |
-| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io` (**no trailing slash**, no path; the old pre-move origin `https://beethoreven.github.io` can be listed too, comma-separated, and removed once it's no longer used) |
+| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io` (**no trailing slash**, no path) |
 | `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` | The Google account email of the first admin |
 
 After **Save**, Render redeploys automatically (about 2–5 minutes).
@@ -1000,7 +1000,7 @@ In Render, open the `mama-fufood-backend` service → **Environment** and copy i
 | `MAMA_FUFOOD__DATABASE_URL` | `DATABASE_URL` from `mama-fufood-backend` (the same one) |
 | `MAMA_FUFOOD__GOOGLE_CLIENT_ID` | `GOOGLE_CLIENT_ID` from `mama-fufood-backend` |
 | `MAMA_FUFOOD__SESSION_SECRET` | `SESSION_SECRET` from `mama-fufood-backend` (**must be the same**) |
-| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io` (the old pre-move origin `https://beethoreven.github.io` can be listed too, comma-separated) |
+| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io` |
 | `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` | `FIRST_ADMIN_EMAIL` from `mama-fufood-backend` |
 
 After **Save**, Render redeploys automatically (about 2–5 minutes).
