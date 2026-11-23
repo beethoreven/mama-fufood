@@ -12,7 +12,7 @@
 |---|---|---|
 | Android App | [`mama-fufood-app`](https://github.com/beethoreven/mama-fufood-app) | 本機打包成 APK,用 `adb` 安裝到手機(還沒有上架 Google Play) |
 | 後端 API | [`router-backend`](https://github.com/beethoreven/router-backend) 的 `apps/mama_fufood/`(好幾個專案共用的後端) | Render(`https://router-backend-3hl2.onrender.com/mama-fufood`) |
-| 網站與管理後台 | [`mama-fufood-web`](https://github.com/beethoreven/mama-fufood-web) | GitHub Pages(`https://beethoreven.github.io/mama-fufood-web/`) |
+| 網站與管理後台 | [`mama-fufood-web`](https://github.com/mama-fufood/mama-fufood-web) | GitHub Pages(`https://mama-fufood.github.io/mama-fufood-web/`) |
 
 資料庫是 Neon Postgres 18,開在 **ap-southeast-1(Singapore)**,與 Render 同區。這不是效能微調而是前提:實測兩端跨區時單次查詢 1.76 秒,同區 0.03 秒,差 59 倍。Neon 的區域建好之後不能改。
 
@@ -51,7 +51,7 @@ git commit -m "Update mama-fufood-app submodule pointer"
 ★ 上線步驟刻意放在這裡而不是各子系統的 README,因為它**跨越三個子系統與 Google Cloud**,有幾條交叉引用,拆開之後就沒有人能照著做完:
 
 1. Google Cloud「網頁應用程式」用戶端 ID → router-backend 的 `MAMA_FUFOOD__GOOGLE_CLIENT_ID`、網站 `js/config.js` 的 `googleClientId`、App `env/prod.json` 的 `MFF_WEB_CLIENT_ID`(三個地方是同一個值)。
-2. 網站的網址 → router-backend 的 `MAMA_FUFOOD__ALLOWED_ORIGINS`、Google 用戶端的「已授權的 JavaScript 來源」、Google 同意畫面的「已授權網域」與連結。
+2. 網站的網址 → router-backend 的 `MAMA_FUFOOD__ALLOWED_ORIGINS`、Google 用戶端的「已授權的 JavaScript 來源」、Google 同意畫面的「已授權網域」與連結。網站原本在 `beethoreven.github.io` 底下,搬到 `mama-fufood` 組織(`mama-fufood.github.io`)之後,舊網址會自動轉到新網址;舊的來源 `https://beethoreven.github.io` 暫時還留在 `MAMA_FUFOOD__ALLOWED_ORIGINS` 與 Google 的設定裡,確定沒有地方再用舊網址之後再拿掉。
 3. 後端的網址(`https://router-backend-3hl2.onrender.com/mama-fufood`)→ 網站 `js/config.js` 的 `apiBase`、App `env/prod.json` 的 `MFF_API_BASE`。
 4. App 簽署金鑰的 SHA-1 → Google Cloud 的 Android 用戶端。
 
@@ -72,7 +72,7 @@ git commit -m "Update mama-fufood-app submodule pointer"
 
 | 值 | 在哪一步產生 | 要填到哪裡 | 秘密 |
 |---|---|---|---|
-| 網站網址 `https://beethoreven.github.io/mama-fufood-web/` | 已知(repo 名稱決定) | Google 同意畫面的連結;來源只填 `https://beethoreven.github.io` | |
+| 網站網址 `https://mama-fufood.github.io/mama-fufood-web/` | 已知(組織與 repo 名稱決定) | Google 同意畫面的連結;來源只填 `https://mama-fufood.github.io` | |
 | Web Client ID(`….apps.googleusercontent.com`) | B7 | Render 的 `MAMA_FUFOOD__GOOGLE_CLIENT_ID`、網站 `js/config.js`、App `env/prod.json` | |
 | 除錯金鑰的 SHA-1 | B7 | Google Cloud 的 Android 用戶端(開發用) | |
 | Neon 連線字串 | C3 | Render 的 `MAMA_FUFOOD__DATABASE_URL` | **秘密** |
@@ -103,8 +103,8 @@ git commit -m "Update mama-fufood-app submodule pointer"
 
 **A1. 在 GitHub 建立三個空的公開 repo**
 
-- 確認是否做過:瀏覽器打開 `https://github.com/beethoreven/mama-fufood`、`…/mama-fufood-app`、`…/mama-fufood-web`,三個都存在就跳過。
-- 做法:到 <https://github.com/new> 建立這三個 repo。Owner 選 `beethoreven`、Visibility 選 **Public**;**不要**勾選加入 README、.gitignore 或授權條款,否則第一次推送會衝突。
+- 確認是否做過:瀏覽器打開 `https://github.com/beethoreven/mama-fufood`、`…/mama-fufood-app`、`https://github.com/mama-fufood/mama-fufood-web`,三個都存在就跳過。
+- 做法:到 <https://github.com/new> 建立這三個 repo。Owner 選 `beethoreven`(`mama-fufood-web` 選 `mama-fufood` 組織,網站網址由它決定)、Visibility 選 **Public**;**不要**勾選加入 README、.gitignore 或授權條款,否則第一次推送會衝突。
 
 **A2. 在本機提交**
 
@@ -125,7 +125,7 @@ git commit -m "Update mama-fufood-app submodule pointer"
   git -C mama-fufood-web add -A
   git -C mama-fufood-web commit -m "Initial commit"
   git submodule add https://github.com/beethoreven/mama-fufood-app.git mama-fufood-app
-  git submodule add https://github.com/beethoreven/mama-fufood-web.git mama-fufood-web
+  git submodule add https://github.com/mama-fufood/mama-fufood-web.git mama-fufood-web
   git submodule add https://github.com/beethoreven/router-backend.git router-backend
   git add -A
   git commit -m "Add the app, web and router-backend repos as submodules"
@@ -147,7 +147,7 @@ git commit -m "Update mama-fufood-app submodule pointer"
   ```bash
   git remote add origin git@github.com-beethoreven:beethoreven/mama-fufood.git
   git -C mama-fufood-app remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-app.git
-  git -C mama-fufood-web remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-web.git
+  git -C mama-fufood-web remote add origin git@github.com-beethoreven:mama-fufood/mama-fufood-web.git
   ```
 
 - 已經有 `origin` 但網址不對的:把那一行的 `remote add` 換成 `remote set-url`。
@@ -190,9 +190,9 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 2. 等一兩分鐘,同一頁上方會顯示「Your site is live at …」和網址。沒出現就是沒存到,回第 1 步確認有按 **Save**。
 
 **確認**:下面三個網址都打得開(不是 404),條款頁顯示的是對應的文件:
-- <https://beethoreven.github.io/mama-fufood-web/>
-- <https://beethoreven.github.io/mama-fufood-web/legal.html?doc=privacy>
-- <https://beethoreven.github.io/mama-fufood-web/legal.html?doc=terms>
+- <https://mama-fufood.github.io/mama-fufood-web/>
+- <https://mama-fufood.github.io/mama-fufood-web/legal.html?doc=privacy>
+- <https://mama-fufood.github.io/mama-fufood-web/legal.html?doc=terms>
 
 **B4. 品牌(Branding)。** 左上選單 → **Google Auth Platform**。第一次進去會先跑「開始使用」(Get started)精靈:應用程式名稱填 `媽媽記副食品`、使用者支援電子郵件選你的 Email、目標對象選**外部**(External)、聯絡資訊填你的 Email、勾選同意 → **建立**。**已經跑過精靈就跳過這段**(左側有「品牌」「目標對象」「用戶端」「資料存取權」等選單就是跑過了)。
 
@@ -203,10 +203,10 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 | 應用程式資訊 | 應用程式名稱 | `媽媽記副食品`(精靈填過就不用改) |
 | 應用程式資訊 | 使用者支援電子郵件 | 你的 Email(精靈選過就不用改) |
 | 應用程式標誌 | 標誌 | **不要上傳**:外部、正式版的 App 一上傳標誌就要走 Google 的品牌驗證 |
-| 應用程式網域 | 應用程式首頁 | `https://beethoreven.github.io/mama-fufood-web/` |
-| 應用程式網域 | 應用程式隱私權政策連結 | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=privacy` |
-| 應用程式網域 | 應用程式服務條款連結 | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=terms` |
-| 授權網域 | 新增網域 | `beethoreven.github.io`(**不是** `github.io`;上面三個網址的網域都要先登記在這裡,否則儲存時會報錯) |
+| 應用程式網域 | 應用程式首頁 | `https://mama-fufood.github.io/mama-fufood-web/` |
+| 應用程式網域 | 應用程式隱私權政策連結 | `https://mama-fufood.github.io/mama-fufood-web/legal.html?doc=privacy` |
+| 應用程式網域 | 應用程式服務條款連結 | `https://mama-fufood.github.io/mama-fufood-web/legal.html?doc=terms` |
+| 授權網域 | 新增網域 | `mama-fufood.github.io`(**不是** `github.io`;上面三個網址的網域都要先登記在這裡,否則儲存時會報錯) |
 | 開發人員聯絡資訊 | 電子郵件地址 | 你的 Email(精靈填過就不用改) |
 
 拉到最下面按 **儲存**。
@@ -233,14 +233,14 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 
 - **「發布應用程式」按鈕是灰的**:品牌還沒填完。回 B4 檢查三個網址與授權網域都填了、而且 B3 的網站打得開。
 - **品牌都填完、網站也打得開,按鈕還是灰的**:2026 年 Google 開發者論壇上有好幾則一樣的回報,Google 沒有給官方解法([論壇文章 1](https://discuss.google.dev/t/cannot-publish-app-publish-app-button-disabled-branding-page-complete-pii-removed-by-staff/401276)、[論壇文章 2](https://discuss.google.dev/t/google-auth-platform-publish-app-disabled-for-external-testing-personal-use-oauth-app/402925))。這時改用替代做法:**維持測試中**,在 **目標對象 → 測試使用者 → 新增使用者**,加入會用到這個 App 的 Google 帳號。代價是雲端硬碟的授權每 7 天要在 App 裡重新同意一次(同步失敗時 App 會請你授權)。之後可以不定期回來試發布。
-- 按下發布時 Google 要求驗證網域或送審:**先不要送審**,一樣改用上面的替代做法。驗證 `beethoreven.github.io` 要在 Google Search Console 證明你擁有這個網域,GitHub Pages 的網域只能用「上傳 HTML 檔到網站根目錄」證明,而根目錄要另開一個名叫 `beethoreven.github.io` 的 repo,不在這份 SOP 的範圍。
+- 按下發布時 Google 要求驗證網域或送審:**先不要送審**,一樣改用上面的替代做法。驗證 `mama-fufood.github.io` 要在 Google Search Console 證明你擁有這個網域,GitHub Pages 的網域只能用「上傳 HTML 檔到網站根目錄」證明,而根目錄要在 `mama-fufood` 組織裡另開一個名叫 `mama-fufood.github.io` 的 repo,不在這份 SOP 的範圍。
 - 沒有品牌驗證時,同意畫面不會顯示 App 名稱(只顯示網域),不影響功能,不需要申請。
 
 **B7. 建立用戶端(Clients)。** 左側 **用戶端 → 建立用戶端**(Create client),現在先建兩個,第三個等 Part G:
 
 1. 應用程式類型選 **網頁應用程式**(Web application)
    - 名稱:`mama-fufood-web`(只是控制台裡的標籤)。
-   - 已授權的 JavaScript 來源(Authorized JavaScript origins)→ **新增 URI**,加兩個:`https://beethoreven.github.io`、`http://localhost:8003`(本機預覽用)。**只有網域**,不含 `/mama-fufood-web/` 路徑,**結尾不要斜線**。
+   - 已授權的 JavaScript 來源(Authorized JavaScript origins)→ **新增 URI**,加兩個:`https://mama-fufood.github.io`、`http://localhost:8003`(本機預覽用)。**只有網域**,不含 `/mama-fufood-web/` 路徑,**結尾不要斜線**。
    - 已授權的重新導向 URI:不用填。
    - **建立**之後畫面會顯示用戶端 ID(Client ID),**記下來**(之後在用戶端列表也查得到)。
 2. 應用程式類型選 **Android**(開發時用,除錯金鑰簽的版本)
@@ -255,7 +255,7 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
      (`~/.android/debug.keystore` 是第一次 `flutter run` 時自動產生的;找不到這個檔就先跑一次 `flutter run`。)
    - **建立**。Android 用戶端的 ID 不用填到任何地方,Google 用套件名稱加 SHA-1 對應。
 
-**確認**:用戶端列表有一個網頁應用程式、一個 Android;品牌頁的授權網域有 `beethoreven.github.io`;目標對象顯示正式版(或你選了替代做法的測試中加測試使用者)。
+**確認**:用戶端列表有一個網頁應用程式、一個 Android;品牌頁的授權網域有 `mama-fufood.github.io`;目標對象顯示正式版(或你選了替代做法的測試中加測試使用者)。
 
 #### Part C. Neon 資料庫
 
@@ -291,7 +291,7 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
 | `MAMA_FUFOOD__DATABASE_URL` | C3 的 Neon 連線字串 |
 | `MAMA_FUFOOD__GOOGLE_CLIENT_ID` | B7 的 Web Client ID |
 | `MAMA_FUFOOD__SESSION_SECRET` | 一串亂數,在終端機執行 `python3 -c "import secrets; print(secrets.token_hex(32))"` 產生。**已經有人在用時不能換**,換了 App 的通行證和後台的登入全部失效,所有人都要重新登入 |
-| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://beethoreven.github.io`(**結尾不要斜線**,不含路徑) |
+| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io`(**結尾不要斜線**,不含路徑;網站搬家前的舊網址 `https://beethoreven.github.io` 可以一起列,用逗號隔開,確定不再使用後拿掉) |
 | `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` | 你要當第一位管理員的 Google 帳號 Email |
 
 **Save** 之後 Render 會自動重新部署,約 2~5 分鐘。
@@ -324,7 +324,7 @@ googleClientId: "B7 的 Web Client ID",
 **F2.** GitHub Pages 已在 B3 開啟,這裡不用再做;F1 推送後一兩分鐘,網站就會換成新的設定。
 
 **F3. 確認:**
-1. 打開 `https://beethoreven.github.io/mama-fufood-web/` 看得到首頁;條款、政策、判斷邏輯說明三個按鈕都打得開。
+1. 打開 `https://mama-fufood.github.io/mama-fufood-web/` 看得到首頁;條款、政策、判斷邏輯說明三個按鈕都打得開。
 2. 右上角用 `FIRST_ADMIN_EMAIL` 的帳號登入(後端剛喚醒時最多等一分鐘)→ 出現「管理後台」。
 3. 進後台:看得到 11 個分組、105 種食材;「系統」分頁的快取版本與資料庫版本一致。
 
@@ -332,9 +332,9 @@ googleClientId: "B7 的 Web Client ID",
 
 **常見問題:**
 - 首頁沒有登入按鈕:`googleClientId` 是空的,或瀏覽器的擋廣告外掛擋掉了 Google 的登入元件(頁面會顯示原因)。
-- Google 的登入視窗顯示來源不符(origin mismatch):B7 的 JavaScript 來源少了 `https://beethoreven.github.io`,或多了路徑、結尾斜線。
+- Google 的登入視窗顯示來源不符(origin mismatch):B7 的 JavaScript 來源少了 `https://mama-fufood.github.io`,或多了路徑、結尾斜線。
 - 登入後顯示「連不上後端」:後端在喚醒,等一分鐘再試;一直不行就檢查 `apiBase`。
-- 瀏覽器的開發者工具出現 CORS 錯誤:Render 的 `MAMA_FUFOOD__ALLOWED_ORIGINS` 不是剛好 `https://beethoreven.github.io`。
+- 瀏覽器的開發者工具出現 CORS 錯誤:Render 的 `MAMA_FUFOOD__ALLOWED_ORIGINS` 沒有包含 `https://mama-fufood.github.io`(多了路徑或結尾斜線也不行)。
 
 #### Part G. App 的簽署金鑰(學一次就好)
 
@@ -433,10 +433,10 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 
 **少任何一項,登入或連線都會失敗:**
 
-1. Google 同意畫面:Authorized domains 有 `beethoreven.github.io`;權限範圍有 `drive.appdata` 與 `drive.file`;狀態是 In production(或 Testing 加 Test users)。
-2. Google「網頁應用程式」用戶端的「已授權的 JavaScript 來源」有 `https://beethoreven.github.io`。
+1. Google 同意畫面:Authorized domains 有 `mama-fufood.github.io`;權限範圍有 `drive.appdata` 與 `drive.file`;狀態是 In production(或 Testing 加 Test users)。
+2. Google「網頁應用程式」用戶端的「已授權的 JavaScript 來源」有 `https://mama-fufood.github.io`。
 3. Google 有兩個 Android 用戶端:除錯金鑰與正式金鑰各一個 SHA-1,套件名稱都是 `tw.com.tutorarthur.mamafufood`。
-4. Render 的 `router-backend` 服務:`MAMA_FUFOOD__ALLOWED_ORIGINS` = `https://beethoreven.github.io`,`MAMA_FUFOOD__GOOGLE_CLIENT_ID` = Web Client ID。
+4. Render 的 `router-backend` 服務:`MAMA_FUFOOD__ALLOWED_ORIGINS` 包含 `https://mama-fufood.github.io`,`MAMA_FUFOOD__GOOGLE_CLIENT_ID` = Web Client ID。
 5. 網站 `js/config.js`:`apiBase` = `https://router-backend-3hl2.onrender.com/mama-fufood`、`googleClientId` = Web Client ID。
 6. App `env/prod.json`:`MFF_API_BASE` = `https://router-backend-3hl2.onrender.com/mama-fufood`、`MFF_WEB_CLIENT_ID` = Web Client ID;改了要重新打包。
 
@@ -474,7 +474,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 | `MAMA_FUFOOD__DATABASE_URL` | `mama-fufood-backend` 的 `DATABASE_URL`(同一個) |
 | `MAMA_FUFOOD__GOOGLE_CLIENT_ID` | `mama-fufood-backend` 的 `GOOGLE_CLIENT_ID` |
 | `MAMA_FUFOOD__SESSION_SECRET` | `mama-fufood-backend` 的 `SESSION_SECRET`(**一定要同一個**) |
-| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://beethoreven.github.io` |
+| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io`(網站搬家前的舊網址 `https://beethoreven.github.io` 可以一起列,用逗號隔開) |
 | `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` | `mama-fufood-backend` 的 `FIRST_ADMIN_EMAIL` |
 
 **Save** 之後 Render 會自動重新部署,約 2~5 分鐘。
@@ -538,7 +538,7 @@ Records live only on the phone and in the user's own Google Drive; the backend o
 |---|---|---|
 | Android app | [`mama-fufood-app`](https://github.com/beethoreven/mama-fufood-app) | Built locally into an APK and installed with `adb` (not on Google Play yet) |
 | Backend API | [`router-backend`](https://github.com/beethoreven/router-backend), `apps/mama_fufood/` (a backend shared by several projects) | Render (`https://router-backend-3hl2.onrender.com/mama-fufood`) |
-| Website and admin console | [`mama-fufood-web`](https://github.com/beethoreven/mama-fufood-web) | GitHub Pages (`https://beethoreven.github.io/mama-fufood-web/`) |
+| Website and admin console | [`mama-fufood-web`](https://github.com/mama-fufood/mama-fufood-web) | GitHub Pages (`https://mama-fufood.github.io/mama-fufood-web/`) |
 
 The database is Neon Postgres 18 in **ap-southeast-1 (Singapore)**, the same region as Render. This is a prerequisite, not a performance tweak: measured, a single query took 1.76 s across regions and 0.03 s within the same region — 59 times slower. A Neon project's region cannot be changed after creation.
 
@@ -577,7 +577,7 @@ That final `git add` + `commit` cannot be skipped — without it, the submodule'
 ★ The go-live steps deliberately live here rather than in each subsystem's README, because they **span all three subsystems plus Google Cloud**, with cross-references that nobody could follow end to end once split apart:
 
 1. The Google Cloud "Web application" client ID → router-backend's `MAMA_FUFOOD__GOOGLE_CLIENT_ID`, the website's `googleClientId` in `js/config.js`, and the app's `MFF_WEB_CLIENT_ID` in `env/prod.json` (the same value in all three places).
-2. The website's URL → router-backend's `MAMA_FUFOOD__ALLOWED_ORIGINS`, the Google client's "Authorized JavaScript origins", and the Google consent screen's "Authorized domains" and links.
+2. The website's URL → router-backend's `MAMA_FUFOOD__ALLOWED_ORIGINS`, the Google client's "Authorized JavaScript origins", and the Google consent screen's "Authorized domains" and links. The site used to live under `beethoreven.github.io`; since moving to the `mama-fufood` organization (`mama-fufood.github.io`), old URLs redirect to the new ones. The old origin `https://beethoreven.github.io` stays in `MAMA_FUFOOD__ALLOWED_ORIGINS` and the Google settings for now, and is removed once nothing uses the old URLs any more.
 3. The backend's URL (`https://router-backend-3hl2.onrender.com/mama-fufood`) → the website's `apiBase` in `js/config.js` and the app's `MFF_API_BASE` in `env/prod.json`.
 4. The SHA-1 of the app's signing key → the Android client in Google Cloud.
 
@@ -598,7 +598,7 @@ For a setup from scratch, follow Part 0 and Parts A–J in order. The backend is
 
 | Value | Created in step | Goes into | Secret |
 |---|---|---|---|
-| Website URL `https://beethoreven.github.io/mama-fufood-web/` | Known in advance (set by the repo name) | Google consent screen links; origins only take `https://beethoreven.github.io` | |
+| Website URL `https://mama-fufood.github.io/mama-fufood-web/` | Known in advance (set by the organization and repo name) | Google consent screen links; origins only take `https://mama-fufood.github.io` | |
 | Web Client ID (`….apps.googleusercontent.com`) | B7 | Render's `MAMA_FUFOOD__GOOGLE_CLIENT_ID`, the website's `js/config.js`, the app's `env/prod.json` | |
 | SHA-1 of the debug key | B7 | The Google Cloud Android client (development) | |
 | Neon connection string | C3 | Render's `MAMA_FUFOOD__DATABASE_URL` | **Secret** |
@@ -629,8 +629,8 @@ The three repos (`mama-fufood`, `mama-fufood-app`, `mama-fufood-web`) are all **
 
 **A1. Create three empty public repos on GitHub**
 
-- Check whether it's done: open `https://github.com/beethoreven/mama-fufood`, `…/mama-fufood-app` and `…/mama-fufood-web` in a browser; if all three exist, skip this step.
-- How: go to <https://github.com/new> and create these three repos. Choose owner `beethoreven` and visibility **Public**; do **not** tick adding a README, .gitignore or license, or the first push will conflict.
+- Check whether it's done: open `https://github.com/beethoreven/mama-fufood`, `…/mama-fufood-app` and `https://github.com/mama-fufood/mama-fufood-web` in a browser; if all three exist, skip this step.
+- How: go to <https://github.com/new> and create these three repos. Choose owner `beethoreven` (for `mama-fufood-web`, the `mama-fufood` organization, which sets the site's URL) and visibility **Public**; do **not** tick adding a README, .gitignore or license, or the first push will conflict.
 
 **A2. Commit locally**
 
@@ -651,7 +651,7 @@ The three repos (`mama-fufood`, `mama-fufood-app`, `mama-fufood-web`) are all **
   git -C mama-fufood-web add -A
   git -C mama-fufood-web commit -m "Initial commit"
   git submodule add https://github.com/beethoreven/mama-fufood-app.git mama-fufood-app
-  git submodule add https://github.com/beethoreven/mama-fufood-web.git mama-fufood-web
+  git submodule add https://github.com/mama-fufood/mama-fufood-web.git mama-fufood-web
   git submodule add https://github.com/beethoreven/router-backend.git router-backend
   git add -A
   git commit -m "Add the app, web and router-backend repos as submodules"
@@ -673,7 +673,7 @@ The three repos (`mama-fufood`, `mama-fufood-app`, `mama-fufood-web`) are all **
   ```bash
   git remote add origin git@github.com-beethoreven:beethoreven/mama-fufood.git
   git -C mama-fufood-app remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-app.git
-  git -C mama-fufood-web remote add origin git@github.com-beethoreven:beethoreven/mama-fufood-web.git
+  git -C mama-fufood-web remote add origin git@github.com-beethoreven:mama-fufood/mama-fufood-web.git
   ```
 
 - For a repo whose `origin` exists but points to the wrong URL: use `remote set-url` instead of `remote add` on that line.
@@ -716,9 +716,9 @@ This Part follows the **Traditional Chinese console UI**; the English UI labels 
 2. Wait a minute or two; "Your site is live at …" and the URL appear at the top of the same page. If they don't, the setting wasn't saved — go back to step 1 and make sure you pressed **Save**.
 
 **Check**: all three URLs open (not 404), and the legal page shows the matching document:
-- <https://beethoreven.github.io/mama-fufood-web/>
-- <https://beethoreven.github.io/mama-fufood-web/legal.html?doc=privacy>
-- <https://beethoreven.github.io/mama-fufood-web/legal.html?doc=terms>
+- <https://mama-fufood.github.io/mama-fufood-web/>
+- <https://mama-fufood.github.io/mama-fufood-web/legal.html?doc=privacy>
+- <https://mama-fufood.github.io/mama-fufood-web/legal.html?doc=terms>
 
 **B4. Branding.** Top-left menu → **Google Auth Platform**. The first visit runs a **Get started** (開始使用) wizard: App name `媽媽記副食品`, User support email: your email, Audience: **External** (外部), Contact information: your email, tick the agreement → **Create**. **Skip this if you've already run the wizard** (if the left side shows Branding, Audience, Clients, Data Access and so on, you have).
 
@@ -729,10 +729,10 @@ Then click **Branding** (品牌) on the left and fill in these fields (leave fie
 | App information | App name | `媽媽記副食品` (no change if the wizard set it) |
 | App information | User support email | Your email (no change if the wizard set it) |
 | App logo | Logo | **Don't upload one**: for an external app in production, uploading a logo triggers Google's brand verification |
-| App domain | Application home page | `https://beethoreven.github.io/mama-fufood-web/` |
-| App domain | Application privacy policy link | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=privacy` |
-| App domain | Application terms of service link | `https://beethoreven.github.io/mama-fufood-web/legal.html?doc=terms` |
-| Authorized domains | Add domain | `beethoreven.github.io` (**not** `github.io`; the domain of the three URLs above must be registered here first, or saving fails) |
+| App domain | Application home page | `https://mama-fufood.github.io/mama-fufood-web/` |
+| App domain | Application privacy policy link | `https://mama-fufood.github.io/mama-fufood-web/legal.html?doc=privacy` |
+| App domain | Application terms of service link | `https://mama-fufood.github.io/mama-fufood-web/legal.html?doc=terms` |
+| Authorized domains | Add domain | `mama-fufood.github.io` (**not** `github.io`; the domain of the three URLs above must be registered here first, or saving fails) |
 | Developer contact information | Email addresses | Your email (no change if the wizard set it) |
 
 Scroll to the bottom and press **Save** (儲存).
@@ -759,14 +759,14 @@ Why publish: in Testing status, grants for anything beyond name, email and profi
 
 - **The "Publish app" button is greyed out**: Branding isn't complete. Go back to B4 and check that the three URLs and the authorized domain are filled in, and that the B3 site opens.
 - **Branding is complete and the site opens, but the button is still greyed out**: several identical reports were posted on Google's developer forum in 2026, with no official fix from Google ([thread 1](https://discuss.google.dev/t/cannot-publish-app-publish-app-button-disabled-branding-page-complete-pii-removed-by-staff/401276), [thread 2](https://discuss.google.dev/t/google-auth-platform-publish-app-disabled-for-external-testing-personal-use-oauth-app/402925)). Use the fallback: **stay in Testing** and under **Audience → Test users → Add users**, add the Google accounts that will use the app. The cost is that the Drive grant has to be re-approved in the app every 7 days (the app asks for it when sync fails). You can come back and retry publishing now and then.
-- If publishing asks for domain verification or a review: **don't submit a review**; use the same fallback. Verifying `beethoreven.github.io` means proving ownership of that domain in Google Search Console, and for a GitHub Pages domain that can only be done by uploading an HTML file to the site root, which needs a separate repo named `beethoreven.github.io` — outside the scope of this guide.
+- If publishing asks for domain verification or a review: **don't submit a review**; use the same fallback. Verifying `mama-fufood.github.io` means proving ownership of that domain in Google Search Console, and for a GitHub Pages domain that can only be done by uploading an HTML file to the site root, which needs a separate repo named `mama-fufood.github.io` in the `mama-fufood` organization — outside the scope of this guide.
 - Without brand verification the consent screen doesn't show the app name (only the domain); this doesn't affect functionality and doesn't need to be applied for.
 
 **B7. Create the clients.** Left side **Clients → Create client** (用戶端 → 建立用戶端); create two now and the third in Part G:
 
 1. Application type **Web application** (網頁應用程式)
    - Name: `mama-fufood-web` (just a label in the console).
-   - Authorized JavaScript origins (已授權的 JavaScript 來源) → **Add URI**, add two: `https://beethoreven.github.io`, `http://localhost:8003` (for local preview). **Domain only**, without the `/mama-fufood-web/` path, **no trailing slash**.
+   - Authorized JavaScript origins (已授權的 JavaScript 來源) → **Add URI**, add two: `https://mama-fufood.github.io`, `http://localhost:8003` (for local preview). **Domain only**, without the `/mama-fufood-web/` path, **no trailing slash**.
    - Authorized redirect URIs: leave empty.
    - After **Create**, the Client ID is shown — **write it down** (it can also be found in the Clients list later).
 2. Application type **Android** (for development, builds signed with the debug key)
@@ -781,7 +781,7 @@ Why publish: in Testing status, grants for anything beyond name, email and profi
      (`~/.android/debug.keystore` is created automatically by the first `flutter run`; if the file doesn't exist, run `flutter run` once first.)
    - **Create**. The Android client's ID isn't entered anywhere — Google matches it by package name plus SHA-1.
 
-**Check**: the Clients list has one Web application and one Android client; the Branding page's authorized domains include `beethoreven.github.io`; Audience shows In production (or Testing plus Test users if you took the fallback).
+**Check**: the Clients list has one Web application and one Android client; the Branding page's authorized domains include `mama-fufood.github.io`; Audience shows In production (or Testing plus Test users if you took the fallback).
 
 #### Part C. Neon Database
 
@@ -817,7 +817,7 @@ The backend code lives in router-backend's `apps/mama_fufood/` and deploys with 
 | `MAMA_FUFOOD__DATABASE_URL` | The Neon connection string from C3 |
 | `MAMA_FUFOOD__GOOGLE_CLIENT_ID` | The Web Client ID from B7 |
 | `MAMA_FUFOOD__SESSION_SECRET` | A random string: generate it in the terminal with `python3 -c "import secrets; print(secrets.token_hex(32))"`. **Don't change it once people use the app**: a new value invalidates every app pass and admin sign-in, and everyone has to sign in again |
-| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://beethoreven.github.io` (**no trailing slash**, no path) |
+| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io` (**no trailing slash**, no path; the old pre-move origin `https://beethoreven.github.io` can be listed too, comma-separated, and removed once it's no longer used) |
 | `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` | The Google account email of the first admin |
 
 After **Save**, Render redeploys automatically (about 2–5 minutes).
@@ -850,7 +850,7 @@ If your backend is on a different host than the one above, change the backend ho
 **F2.** GitHub Pages was already turned on in B3, so nothing to do here; a minute or two after F1 is pushed, the site picks up the new settings.
 
 **F3. Check:**
-1. `https://beethoreven.github.io/mama-fufood-web/` shows the home page; the terms, privacy policy and judgement-logic guide buttons all open.
+1. `https://mama-fufood.github.io/mama-fufood-web/` shows the home page; the terms, privacy policy and judgement-logic guide buttons all open.
 2. Sign in at the top right with the `FIRST_ADMIN_EMAIL` account (allow up to a minute if the backend was asleep) → "管理後台" (Admin console) appears.
 3. In the console: 11 groups and 105 foods are listed; the "系統" (System) tab shows matching cache and database versions.
 
@@ -858,9 +858,9 @@ If your backend is on a different host than the one above, change the backend ho
 
 **Common problems:**
 - No sign-in button on the home page: `googleClientId` is empty, or an ad-blocking extension blocked Google's sign-in script (the page says so).
-- Google's sign-in window reports an origin mismatch: B7's JavaScript origins are missing `https://beethoreven.github.io`, or have a path or trailing slash added.
+- Google's sign-in window reports an origin mismatch: B7's JavaScript origins are missing `https://mama-fufood.github.io`, or have a path or trailing slash added.
 - "連不上後端" (can't reach the backend) after signing in: the backend is waking up — wait a minute and retry; if it never works, check `apiBase`.
-- A CORS error in the browser's developer tools: Render's `MAMA_FUFOOD__ALLOWED_ORIGINS` isn't exactly `https://beethoreven.github.io`.
+- A CORS error in the browser's developer tools: Render's `MAMA_FUFOOD__ALLOWED_ORIGINS` doesn't include `https://mama-fufood.github.io` (a path or trailing slash also breaks it).
 
 #### Part G. The App's Signing Key (Learn It Once)
 
@@ -959,10 +959,10 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 
 **Miss any one of these and sign-in or connections will fail:**
 
-1. Google consent screen: Authorized domains include `beethoreven.github.io`; the scopes include `drive.appdata` and `drive.file`; the status is In production (or Testing plus Test users).
-2. The Google "Web application" client's "Authorized JavaScript origins" include `https://beethoreven.github.io`.
+1. Google consent screen: Authorized domains include `mama-fufood.github.io`; the scopes include `drive.appdata` and `drive.file`; the status is In production (or Testing plus Test users).
+2. The Google "Web application" client's "Authorized JavaScript origins" include `https://mama-fufood.github.io`.
 3. Google has two Android clients: one SHA-1 each for the debug key and the release key, both with package name `tw.com.tutorarthur.mamafufood`.
-4. The Render service `router-backend`: `MAMA_FUFOOD__ALLOWED_ORIGINS` = `https://beethoreven.github.io`, `MAMA_FUFOOD__GOOGLE_CLIENT_ID` = the Web Client ID.
+4. The Render service `router-backend`: `MAMA_FUFOOD__ALLOWED_ORIGINS` includes `https://mama-fufood.github.io`, `MAMA_FUFOOD__GOOGLE_CLIENT_ID` = the Web Client ID.
 5. The website's `js/config.js`: `apiBase` = `https://router-backend-3hl2.onrender.com/mama-fufood`, `googleClientId` = the Web Client ID.
 6. The app's `env/prod.json`: `MFF_API_BASE` = `https://router-backend-3hl2.onrender.com/mama-fufood`, `MFF_WEB_CLIENT_ID` = the Web Client ID; rebuild after any change.
 
@@ -1000,7 +1000,7 @@ In Render, open the `mama-fufood-backend` service → **Environment** and copy i
 | `MAMA_FUFOOD__DATABASE_URL` | `DATABASE_URL` from `mama-fufood-backend` (the same one) |
 | `MAMA_FUFOOD__GOOGLE_CLIENT_ID` | `GOOGLE_CLIENT_ID` from `mama-fufood-backend` |
 | `MAMA_FUFOOD__SESSION_SECRET` | `SESSION_SECRET` from `mama-fufood-backend` (**must be the same**) |
-| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://beethoreven.github.io` |
+| `MAMA_FUFOOD__ALLOWED_ORIGINS` | `https://mama-fufood.github.io` (the old pre-move origin `https://beethoreven.github.io` can be listed too, comma-separated) |
 | `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` | `FIRST_ADMIN_EMAIL` from `mama-fufood-backend` |
 
 After **Save**, Render redeploys automatically (about 2–5 minutes).

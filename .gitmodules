@@ -3,7 +3,7 @@
 	url = https://github.com/beethoreven/mama-fufood-app.git
 [submodule "mama-fufood-web"]
 	path = mama-fufood-web
-	url = https://github.com/beethoreven/mama-fufood-web.git
+	url = https://github.com/mama-fufood/mama-fufood-web.git
 [submodule "router-backend"]
 	path = router-backend
 	url = https://github.com/beethoreven/router-backend.git
