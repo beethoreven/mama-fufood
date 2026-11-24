@@ -55,7 +55,7 @@ git commit -m "Update mama-fufood-app submodule pointer"
 3. 後端的網址(`https://router-backend-3hl2.onrender.com/mama-fufood`)→ 網站 `js/config.js` 的 `apiBase`、App `env/prod.json` 的 `MFF_API_BASE`。
 4. App 簽署金鑰的 SHA-1 → Google Cloud 的 Android 用戶端。
 
-從頭架設照 Part 0、A~J 的順序做。後端是好幾個專案共用的 [router-backend](https://github.com/beethoreven/router-backend),Render 服務本身與它的保活照 router-backend 的 README 建立,這裡只寫 mama-fufood 要加的設定(Part D)。Part K 是從舊的獨立後端 `mama-fufood-backend` 搬過來的步驟,目前只剩 K4。外部服務的帳號由你自己登入、自己設定;畫面上的選單名稱可能和這裡寫的略有不同(Google、Render、Neon 偶爾會改版),意思對得上就可以。每個 Part 最後都有「確認」,沒有通過就先不要往下做。
+從頭架設照 Part 0、A~J 的順序做。後端是好幾個專案共用的 [router-backend](https://github.com/beethoreven/router-backend),Render 服務本身與它的保活照 router-backend 的 README 建立,這裡只寫 mama-fufood 要加的設定(Part D)。Part K 是從舊的獨立後端 `mama-fufood-backend` 搬過來的步驟,已經全部做完,留作紀錄。外部服務的帳號由你自己登入、自己設定;畫面上的選單名稱可能和這裡寫的略有不同(Google、Render、Neon 偶爾會改版),意思對得上就可以。每個 Part 最後都有「確認」,沒有通過就先不要往下做。
 
 #### Part 0. 開始前準備
 
@@ -325,7 +325,7 @@ googleClientId: "B7 的 Web Client ID",
 
 **F3. 確認:**
 1. 打開 `https://mama-fufood.github.io/mama-fufood-web/` 看得到首頁;條款、政策、判斷邏輯說明三個按鈕都打得開。
-2. 右上角用 `FIRST_ADMIN_EMAIL` 的帳號登入(後端剛喚醒時最多等一分鐘)→ 出現「管理後台」。
+2. 右上角用 `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` 的帳號登入(後端剛喚醒時最多等一分鐘)→ 出現「管理後台」。
 3. 進後台:看得到 11 個分組、105 種食材;「系統」分頁的快取版本與資料庫版本一致。
 
 **F4.** 要讓其他人也當管理員:後台「管理員」分頁新增他們的 Email。
@@ -459,7 +459,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 
 #### Part K. 搬到共用後端 router-backend
 
-後端從獨立的 `mama-fufood-backend` 搬進好幾個專案共用的 [router-backend](https://github.com/beethoreven/router-backend),網址變成 `https://router-backend-3hl2.onrender.com/mama-fufood`。**K1~K3 已經做完**(網站已改新網址;App 2.0.0 已發布到 GitHub Release),**下一步是 K4**,手機都換成 2.0.0、確認沒問題才做。從頭架設的人不用做這個 Part,Part D 已經是新的做法。**資料庫不搬**:新服務連的就是 Part C 的同一個 Neon 資料庫(區域 ap-southeast-1,和 Render 同區)。程式已經在 router-backend 的 `apps/mama_fufood/`。
+後端從獨立的 `mama-fufood-backend` 搬進好幾個專案共用的 [router-backend](https://github.com/beethoreven/router-backend),網址變成 `https://router-backend-3hl2.onrender.com/mama-fufood`。**K1~K4 都已經做完**:舊的 `mama-fufood-backend` 服務已經不在 Render 上,GitHub 上的 repo 也已設成私人;下面的步驟留作紀錄。從頭架設的人不用做這個 Part,Part D 已經是新的做法。**資料庫不搬**:新服務連的就是 Part C 的同一個 Neon 資料庫(區域 ap-southeast-1,和 Render 同區)。程式已經在 router-backend 的 `apps/mama_fufood/`。
 
 ★ App 的通行證與後台的登入都不會失效,前提是 K1 的 `MAMA_FUFOOD__SESSION_SECRET` 填**原本的** `SESSION_SECRET`。填了新的值,所有人都要重新登入。
 
@@ -581,7 +581,7 @@ That final `git add` + `commit` cannot be skipped — without it, the submodule'
 3. The backend's URL (`https://router-backend-3hl2.onrender.com/mama-fufood`) → the website's `apiBase` in `js/config.js` and the app's `MFF_API_BASE` in `env/prod.json`.
 4. The SHA-1 of the app's signing key → the Android client in Google Cloud.
 
-For a setup from scratch, follow Part 0 and Parts A–J in order. The backend is [router-backend](https://github.com/beethoreven/router-backend), shared by several projects; the Render service itself and its keep-alive are set up per the router-backend README, and this guide only covers the settings mama-fufood adds (Part D). Part K is the move from the old standalone backend `mama-fufood-backend`; only K4 is left. You sign in to and configure every external service yourself; menu names on screen may differ slightly from what's written here (Google, Render and Neon redesign occasionally) — as long as the meaning matches, you're fine. Every Part ends with a "Check"; don't move on until it passes.
+For a setup from scratch, follow Part 0 and Parts A–J in order. The backend is [router-backend](https://github.com/beethoreven/router-backend), shared by several projects; the Render service itself and its keep-alive are set up per the router-backend README, and this guide only covers the settings mama-fufood adds (Part D). Part K is the move from the old standalone backend `mama-fufood-backend`; it's all done and kept as a record. You sign in to and configure every external service yourself; menu names on screen may differ slightly from what's written here (Google, Render and Neon redesign occasionally) — as long as the meaning matches, you're fine. Every Part ends with a "Check"; don't move on until it passes.
 
 #### Part 0. Before You Start
 
@@ -851,7 +851,7 @@ If your backend is on a different host than the one above, change the backend ho
 
 **F3. Check:**
 1. `https://mama-fufood.github.io/mama-fufood-web/` shows the home page; the terms, privacy policy and judgement-logic guide buttons all open.
-2. Sign in at the top right with the `FIRST_ADMIN_EMAIL` account (allow up to a minute if the backend was asleep) → "管理後台" (Admin console) appears.
+2. Sign in at the top right with the `MAMA_FUFOOD__FIRST_ADMIN_EMAIL` account (allow up to a minute if the backend was asleep) → "管理後台" (Admin console) appears.
 3. In the console: 11 groups and 105 foods are listed; the "系統" (System) tab shows matching cache and database versions.
 
 **F4.** To make someone else an admin too: add their email on the console's "管理員" (Admins) tab.
@@ -985,7 +985,7 @@ If any step doesn't match, send feedback from the app with "遇到問題" (ran i
 
 #### Part K. Move to the shared router-backend
 
-The backend moves from the standalone `mama-fufood-backend` into [router-backend](https://github.com/beethoreven/router-backend), a service shared by several projects; the URL becomes `https://router-backend-3hl2.onrender.com/mama-fufood`. **K1–K3 are done** (the website uses the new URL; app 2.0.0 is published on GitHub Releases), and **the next step is K4**, once every phone runs 2.0.0 and works. A setup from scratch skips this Part — Part D already describes the new way. **The database doesn't move**: the new service connects to the same Neon database from Part C (region ap-southeast-1, the same as Render). The code is already in router-backend's `apps/mama_fufood/`.
+The backend moves from the standalone `mama-fufood-backend` into [router-backend](https://github.com/beethoreven/router-backend), a service shared by several projects; the URL becomes `https://router-backend-3hl2.onrender.com/mama-fufood`. **K1–K4 are all done**: the old `mama-fufood-backend` service is gone from Render and its GitHub repo is private; the steps below are kept as a record. A setup from scratch skips this Part — Part D already describes the new way. **The database doesn't move**: the new service connects to the same Neon database from Part C (region ap-southeast-1, the same as Render). The code is already in router-backend's `apps/mama_fufood/`.
 
 ★ App passes and admin sign-ins stay valid, as long as `MAMA_FUFOOD__SESSION_SECRET` in K1 is the **original** `SESSION_SECRET`. With a new value, everyone has to sign in again.
 
