@@ -83,7 +83,7 @@ git commit -m "Update mama-fufood-app submodule pointer"
 
 **3. 本機工具**
 
-- Flutter 與 Android Studio:照 `mama-fufood-app` README 的 Part A 裝好。
+- Flutter(用 FVM,版本寫在 `mama-fufood-app/.fvmrc`)與 Android Studio:照 `mama-fufood-app` README 的 Part A 裝好。
 - **`keytool` 要用 Android Studio 內附的那一支。** macOS 內建的 `keytool` 沒有 Java 可以跑,會出現「Unable to locate a Java Runtime」;而且在中文環境下,`keytool -list -v` 會因為中文訊息的格式錯誤直接當掉(`IllegalFormatConversionException`),所以每次都加 `-J-Duser.language=en` 改用英文訊息。先在終端機設一個變數,確認這支 keytool 能用(變數只在這個終端機視窗有效;後面用到 keytool 的指令區塊,第一行都會再設一次,換了終端機視窗也能直接整段貼上):
 
   ```bash
@@ -252,7 +252,7 @@ meta 記錄的是子模組的 commit,先推 meta 會指向 GitHub 上還不存�
      "$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1
      ```
 
-     (`~/.android/debug.keystore` 是第一次 `flutter run` 時自動產生的;找不到這個檔就先跑一次 `flutter run`。)
+     (`~/.android/debug.keystore` 是第一次 `flutter run` 時自動產生的;找不到這個檔就先在 `mama-fufood-app` 跑一次 `fvm flutter run`。)
    - **建立**。Android 用戶端的 ID 不用填到任何地方,Google 用套件名稱加 SHA-1 對應。
 
 **確認**:用戶端列表有一個網頁應用程式、一個 Android;品牌頁的授權網域有 `mama-fufood.github.io`;目標對象顯示正式版(或你選了替代做法的測試中加測試使用者)。
@@ -403,7 +403,7 @@ KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool
 
 ```bash
 cd mama-fufood-app
-flutter build apk --release --dart-define-from-file=env/prod.json
+fvm flutter build apk --release --dart-define-from-file=env/prod.json
 ```
 
 產出 `build/app/outputs/flutter-apk/app-release.apk`(約 76 MB),同一個資料夾還會有一份檔名帶版本號的 `mama-fufood-<版本>.apk`(例如 `mama-fufood-2.0.0.apk`),內容一樣,要留存或傳給別人時用這份。下面的安裝指令用 `app-release.apk`,它永遠是最新打包的那一版。沒有 `key.properties` 時會直接停下來並說明原因(避免不小心用除錯金鑰簽)。
@@ -724,7 +724,7 @@ For a setup from scratch, follow Part 0 and Parts A–J in order. The backend is
 
 **3. Local tools**
 
-- Flutter and Android Studio: install them per Part A of the `mama-fufood-app` README.
+- Flutter (via FVM; the version is in `mama-fufood-app/.fvmrc`) and Android Studio: install them per Part A of the `mama-fufood-app` README.
 - **Use the `keytool` bundled with Android Studio.** macOS's built-in `keytool` has no Java to run on and fails with "Unable to locate a Java Runtime"; and in a Chinese-language environment, `keytool -list -v` crashes on a formatting bug in its Chinese messages (`IllegalFormatConversionException`), so always add `-J-Duser.language=en` to switch it to English messages. Set a variable in the terminal first and confirm this keytool works (the variable only lasts for this terminal window; every later command block that uses keytool sets it again on its first line, so it can be pasted as a whole even in a new terminal window):
 
   ```bash
@@ -893,7 +893,7 @@ Why publish: in Testing status, grants for anything beyond name, email and profi
      "$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1
      ```
 
-     (`~/.android/debug.keystore` is created automatically by the first `flutter run`; if the file doesn't exist, run `flutter run` once first.)
+     (`~/.android/debug.keystore` is created automatically by the first `flutter run`; if the file doesn't exist, run `fvm flutter run` once in `mama-fufood-app` first.)
    - **Create**. The Android client's ID isn't entered anywhere — Google matches it by package name plus SHA-1.
 
 **Check**: the Clients list has one Web application and one Android client; the Branding page's authorized domains include `mama-fufood.github.io`; Audience shows In production (or Testing plus Test users if you took the fallback).
@@ -1044,7 +1044,7 @@ KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool
 
 ```bash
 cd mama-fufood-app
-flutter build apk --release --dart-define-from-file=env/prod.json
+fvm flutter build apk --release --dart-define-from-file=env/prod.json
 ```
 
 The output is `build/app/outputs/flutter-apk/app-release.apk` (about 76 MB). The same folder also gets an identical copy whose name carries the version, `mama-fufood-<version>.apk` (for example `mama-fufood-2.0.0.apk`); use that one when keeping or sending a build. The install command below uses `app-release.apk`, which is always the latest build. Without `key.properties` the build stops and explains why (so it can't accidentally be signed with the debug key).
