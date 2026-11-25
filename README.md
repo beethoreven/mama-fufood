@@ -55,7 +55,7 @@ git commit -m "Update mama-fufood-app submodule pointer"
 3. 後端的網址(`https://router-backend-3hl2.onrender.com/mama-fufood`)→ 網站 `js/config.js` 的 `apiBase`、App `env/prod.json` 的 `MFF_API_BASE`。
 4. App 簽署金鑰的 SHA-1 → Google Cloud 的 Android 用戶端。
 
-從頭架設照 Part 0、A~J 的順序做。後端是好幾個專案共用的 [router-backend](https://github.com/beethoreven/router-backend),Render 服務本身與它的保活照 router-backend 的 README 建立,這裡只寫 mama-fufood 要加的設定(Part D)。Part K 是從舊的獨立後端 `mama-fufood-backend` 搬過來的步驟,已經全部做完,留作紀錄。外部服務的帳號由你自己登入、自己設定;畫面上的選單名稱可能和這裡寫的略有不同(Google、Render、Neon 偶爾會改版),意思對得上就可以。每個 Part 最後都有「確認」,沒有通過就先不要往下做。
+從頭架設照 Part 0、A~J 的順序做。後端是好幾個專案共用的 [router-backend](https://github.com/beethoreven/router-backend),Render 服務本身與它的保活照 router-backend 的 README 建立,這裡只寫 mama-fufood 要加的設定(Part D)。Part K 是從舊的獨立後端 `mama-fufood-backend` 搬過來的步驟,已經全部做完,留作紀錄。Part L 是把舊的簽署金鑰(憑證帶城市)換掉的步驟,從頭架設的人不用做。外部服務的帳號由你自己登入、自己設定;畫面上的選單名稱可能和這裡寫的略有不同(Google、Render、Neon 偶爾會改版),意思對得上就可以。每個 Part 最後都有「確認」,沒有通過就先不要往下做。
 
 #### Part 0. 開始前準備
 
@@ -345,16 +345,12 @@ googleClientId: "B7 的 Web Client ID",
 ```bash
 mkdir -p ~/Keys/mama-fufood
 KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
-"$KEYTOOL" -J-Duser.language=en -genkeypair -v -keystore ~/Keys/mama-fufood/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+"$KEYTOOL" -J-Duser.language=en -genkeypair -v -keystore ~/Keys/mama-fufood/upload-keystore-2026.jks -keyalg RSA -keysize 4096 -validity 10000 -alias upload -dname "CN=mama-fufood"
 ```
 
-指令會一題一題問:
+指令只會問密碼:自己訂一組(至少 6 個字),輸入兩次,畫面不會顯示。
 
-| 問題 | 怎麼填 |
-|---|---|
-| Enter keystore password / Re-enter new password | 自己訂一組密碼(至少 6 個字),輸入時畫面不會顯示 |
-| What is your first and last name? 以及 organizational unit、organization、City、State、country code | ★ 這些會寫進 App 安裝檔的憑證裡,**任何人拿到 APK 都讀得到**。不想公開就直接按 Enter 留空 |
-| Is CN=…, correct? | 輸入 `yes` |
+★ 憑證的欄位(姓名、組織、城市、國家)會寫進 App 安裝檔裡,**任何人拿到 APK 都讀得到**,所以用 `-dname "CN=mama-fufood"` 只寫專案名稱,不會再一題一題問。
 
 **G2.** 建立 `mama-fufood-app/android/key.properties`(注意是 `android` 資料夾裡,不是 `mama-fufood-app/` 底下;已經在 `.gitignore` 裡)。`storeFile` 要寫完整路徑,`~` 不會被展開:
 
@@ -362,18 +358,18 @@ KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool
 storePassword=你剛剛訂的密碼
 keyPassword=你剛剛訂的密碼
 keyAlias=upload
-storeFile=/Users/<你的帳號>/Keys/mama-fufood/upload-keystore.jks
+storeFile=/Users/<你的帳號>/Keys/mama-fufood/upload-keystore-2026.jks
 ```
 
 `<你的帳號>` 是這台 Mac 的使用者名稱(家目錄的資料夾名稱),不是 Google 或 GitHub 帳號。不確定的話,在終端機跑下面這行,印出來的整串就是 `storeFile` 要填的值:
 
 ```bash
-echo ~/Keys/mama-fufood/upload-keystore.jks
+echo ~/Keys/mama-fufood/upload-keystore-2026.jks
 ```
 
 (用這個指令建立的金鑰,金鑰密碼和金鑰庫密碼是同一組。)
 
-**G3. 備份。** 金鑰建好之後只存在這台電腦的 `~/Keys/mama-fufood/upload-keystore.jks`;密碼另外以明文寫在 G2 的 `key.properties`(只在這台電腦、不進 git)。電腦壞掉或遺失,金鑰就沒了,所以要備份到電腦以外的地方:
+**G3. 備份。** 金鑰建好之後只存在這台電腦的 `~/Keys/mama-fufood/upload-keystore-2026.jks`;密碼另外以明文寫在 G2 的 `key.properties`(只在這台電腦、不進 git)。電腦壞掉或遺失,金鑰就沒了,所以要備份到電腦以外的地方:
 
 - **金鑰檔**:複製一份到雲端硬碟(Google 雲端硬碟、iCloud、OneDrive 都可以),或隨身碟。
 - **密碼**:放進密碼管理器,**不要和金鑰檔放在同一個地方**。只拿到金鑰檔、沒有密碼,是沒辦法拿來簽 App 的;兩樣分開放,其中一邊外洩也還安全。
@@ -385,7 +381,7 @@ echo ~/Keys/mama-fufood/upload-keystore.jks
 
 ```bash
 KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
-"$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/Keys/mama-fufood/upload-keystore.jks -alias upload | grep SHA1
+"$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/Keys/mama-fufood/upload-keystore-2026.jks -alias upload | grep SHA1
 ```
 
 **確認**:Google Cloud 的 Clients 列表有兩個 Android 用戶端,SHA-1 不一樣。
@@ -517,6 +513,125 @@ git -C mama-fufood-web push
 
 **確認**:舊網址打不開;新網址的 `/mama-fufood/ready` 還是 `"ok": true`;沒登入 GitHub 的瀏覽器打不開 `mama-fufood-backend` repo。
 
+#### Part L. 換 App 的簽署金鑰(憑證不再帶城市)
+
+原本的金鑰建立時填了城市;憑證的欄位會寫進每一個 APK,任何人拿到 APK 都讀得到。這個 Part 換成憑證只寫 `CN=mama-fufood` 的新金鑰,和下一版一起發布。從頭架設的人不用做,照 Part G 建立的金鑰本來就不帶城市。
+
+★ 換了金鑰,舊版**不能直接更新**成新版(Android 只接受同一把金鑰簽的更新),每支手機都要先解除安裝再裝新版。解除安裝會清掉手機上的資料,所以 L1 一定要先做。
+
+★ Google Cloud **不要新建** Android 用戶端,而是把原本那個用戶端的 SHA-1 改成新的(L5)。用戶端 ID 不變,雲端硬碟裡的同步資料、匯出檔的金鑰與照片才一定讀得到:Google 的文件沒有寫清楚這些權限是跟著用戶端,還是跟著整個專案。改了之後,還沒重裝的手機就不能登入、不能用雲端功能,所以 L1 每支手機都做完才做 L5,而且盡量同一天把手機全部換完。
+
+下面的指令沒有特別說明的,都在 meta repo(`mama-fufood`)的根目錄執行。
+
+**L1. 每支手機先備份。** 先確認是否做過:每支手機「App 設定」的「最後同步」是今天、沒有「上次失敗」,而且雲端硬碟「媽媽記副食品」資料夾裡有每支手機今天的匯出檔(`.mff`),就跳到 L2。
+
+1. 「App 設定」打開「紀錄與雲端同步」與「照片存到雲端」,按「現在同步」,等到出現「同步完成」。
+2. 右上角選單 →「匯入/匯出」→「匯出」。完成後到雲端硬碟確認「媽媽記副食品」資料夾有剛剛的匯出檔。匯出檔裡有全部的紀錄與照片,是這次換金鑰的保險。
+3. 在電腦上從 [GitHub Release v2.0.1](https://github.com/beethoreven/mama-fufood-app/releases/tag/v2.0.1) 下載 `mama-fufood-2.0.1.apk` 存起來,L7 退回時要用(L10 會把它從 GitHub 拿掉)。
+
+**L2. 建立新金鑰(在終端機做)。** 先確認是否做過:`~/Keys/mama-fufood/upload-keystore-2026.jks` 已經存在,就跳到 L3。
+
+```bash
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
+"$KEYTOOL" -J-Duser.language=en -genkeypair -v -keystore ~/Keys/mama-fufood/upload-keystore-2026.jks -keyalg RSA -keysize 4096 -validity 10000 -alias upload -dname "CN=mama-fufood"
+```
+
+只會問密碼(輸入兩次,畫面不會顯示);憑證的欄位已經由 `-dname` 指定,不會再問姓名與城市。舊的 `upload-keystore.jks` 先不要刪,L7 退回時要用。
+
+建好之後把資料夾與檔案設成只有自己能讀:
+
+```bash
+chmod 700 ~/Keys/mama-fufood
+chmod 600 ~/Keys/mama-fufood/upload-keystore-2026.jks
+```
+
+**確認**:`ls -l ~/Keys/mama-fufood/upload-keystore-2026.jks` 開頭是 `-rw-------`;下面這行印出的 `Owner:` 只有 `CN=mama-fufood`;`SHA1:` 後面那一串記下來,L5 要用。
+
+```bash
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
+"$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/Keys/mama-fufood/upload-keystore-2026.jks -alias upload | grep -E "Owner|SHA1"
+```
+
+**L3. 備份新金鑰,改 key.properties。** 先確認是否做過:`mama-fufood-app/android/key.properties` 的 `storeFile` 結尾已經是 `upload-keystore-2026.jks`,就跳到 L4。
+
+1. 照 G3 備份新的金鑰檔與密碼(兩樣分開放)。
+2. 打開 `mama-fufood-app/android/key.properties`:`storeFile` 換成下面這行印出來的整串,`storePassword` 與 `keyPassword` 都換成 L2 訂的密碼,`keyAlias` 不變(`upload`)。
+
+```bash
+echo ~/Keys/mama-fufood/upload-keystore-2026.jks
+```
+
+**L4. 打包新版。** 先確認是否做過:下面的檢查印出 `CN=mama-fufood`,就跳到 L5。
+
+照 Part H 的 H2 打包,再檢查 APK 的憑證(`36.0.0` 是 Android SDK build-tools 的版本,依你裝的為準,`ls ~/Library/Android/sdk/build-tools` 看得到):
+
+```bash
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ~/Library/Android/sdk/build-tools/36.0.0/apksigner verify --print-certs mama-fufood-app/build/app/outputs/flutter-apk/app-release.apk | grep "certificate DN"
+```
+
+**確認**:印出 `Signer #1 certificate DN: CN=mama-fufood`,沒有城市。
+
+**L5. Google Cloud 改 SHA-1(L1 每支手機都做完才做)。** 先確認是否做過:Google Auth Platform 的 **用戶端**(Clients)裡,正式版的 Android 用戶端(套件名稱 `tw.com.tutorarthur.mamafufood`)的 SHA-1 已經是 L2 的新值,就跳到 L6。
+
+兩個 Android 用戶端裡,正式版的是 SHA-1 和舊金鑰一樣的那個(舊金鑰的 SHA-1 用 L7 第 1 步的指令查)。點開它 → **SHA-1 憑證指紋**改成 L2 記下的新值 → **儲存**。不要新建用戶端,Web 用戶端與除錯用的 Android 用戶端也都不要動。
+
+**確認**:這個 Android 用戶端的用戶端 ID 和改之前一樣,SHA-1 是新的。
+
+**L6. 先換一支手機試。** 先確認是否做過:這支手機「App 設定」顯示的是新版,紀錄與照片都在,就跳到 L8。
+
+1. 手機用 USB 接上電腦(H3、H4 的做法),然後:
+
+```bash
+adb uninstall tw.com.tutorarthur.mamafufood
+adb install mama-fufood-app/build/app/outputs/flutter-apk/app-release.apk
+```
+
+2. 打開 App,看完資料運用原則,在第一個寶寶的畫面選「從雲端取回」,登入同一個 Google 帳號,等紀錄回來。
+3. 「App 設定」確認「照片存到雲端」開著,再打開一筆有照片的紀錄,照片看得到。
+4. 「匯入/匯出」→「匯入」,選 L1 的匯出檔:出現「要匯入嗎？」和寶寶數、紀錄筆數,就代表讀得到匯出檔的金鑰;按取消。
+
+**確認**:紀錄、照片都在,L1 的匯出檔讀得出來。任何一項不對就做 L7,不要繼續。
+
+**L7. 退回(L6 有任何一項不對才做)。** 做完之後手機回到 2.0.1,其他手機照常使用;先停在這裡,記下 L6 哪一項不對。
+
+1. Google Cloud:把 L5 的 SHA-1 改回舊金鑰的。舊金鑰的 SHA-1:
+
+```bash
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
+"$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/Keys/mama-fufood/upload-keystore.jks -alias upload | grep SHA1
+```
+
+2. `mama-fufood-app/android/key.properties` 改回舊金鑰(`upload-keystore.jks` 與舊密碼)。
+3. 手機:`adb uninstall tw.com.tutorarthur.mamafufood`,再 `adb install <L1 下載的 mama-fufood-2.0.1.apk 的路徑>`,打開後選「從雲端取回」。
+
+**確認**:手機上是 2.0.1,紀錄與照片都在。
+
+**L8. 發布新版(L6 都確認過才做)。** 先確認是否做過:網站首頁的「下載最新版媽媽記副食品」連到新版,就跳到 L9。
+
+1. 在 `mama-fufood-app` 的 GitHub Release 建立新版,附上 L4 打包出來、檔名帶版本號的 `mama-fufood-<版本>.apk`;說明寫明「這一版換了簽署金鑰,不能直接覆蓋安裝:先同步、匯出,解除安裝舊版再安裝」。
+2. 網站 `js/config.js` 的 `apkVersion` 改成新版本,重跑示範版產生工具,提交並推送(指令同 K2)。
+
+**確認**:沒登入的瀏覽器打開網站首頁,下載的是新版。
+
+**L9. 其他手機。** 先確認是否做過:每支手機「App 設定」顯示的都是新版,就跳到 L10。
+
+每支手機:L1 做過了 → 解除安裝 App → 用手機的瀏覽器從網站下載新版安裝 → 選「從雲端取回」→ 確認紀錄與照片都在。
+
+**L10. 拿掉舊版的 APK(每支手機都換好才做)。** 先確認是否做過:`mama-fufood-app` 的 Releases 裡,v2.0.1 以前的版本都沒有 `.apk` 附件,就做完了。
+
+舊版 APK 的憑證帶著城市,要從 GitHub 拿掉(版本說明留著)。在任何資料夾都能執行:
+
+```bash
+gh release delete-asset v2.0.1 mama-fufood-2.0.1.apk -R beethoreven/mama-fufood-app --yes
+gh release delete-asset v2.0.0 mama-fufood-2.0.0.apk -R beethoreven/mama-fufood-app --yes
+gh release delete-asset v1.2.0 mama-fufood-1.2.0.apk -R beethoreven/mama-fufood-app --yes
+gh release delete-asset v1.1.0 mama-fufood-1.1.0.apk -R beethoreven/mama-fufood-app --yes
+```
+
+舊的金鑰不再用來簽 App,和備份一起留著即可。
+
+**確認**:沒登入的瀏覽器打開 Releases,舊版都沒有 APK 可以下載。
+
 ### 已知限制
 
 - **這份上線 SOP 還沒有照著完整跑過一次**;實際做的時候遇到和這裡不一樣的畫面或錯誤,要回來修正這份文件。Google 同意畫面在發布時會不會要求驗證網域,事先無法確認,所以 B6 寫了替代做法。
@@ -581,7 +696,7 @@ That final `git add` + `commit` cannot be skipped — without it, the submodule'
 3. The backend's URL (`https://router-backend-3hl2.onrender.com/mama-fufood`) → the website's `apiBase` in `js/config.js` and the app's `MFF_API_BASE` in `env/prod.json`.
 4. The SHA-1 of the app's signing key → the Android client in Google Cloud.
 
-For a setup from scratch, follow Part 0 and Parts A–J in order. The backend is [router-backend](https://github.com/beethoreven/router-backend), shared by several projects; the Render service itself and its keep-alive are set up per the router-backend README, and this guide only covers the settings mama-fufood adds (Part D). Part K is the move from the old standalone backend `mama-fufood-backend`; it's all done and kept as a record. You sign in to and configure every external service yourself; menu names on screen may differ slightly from what's written here (Google, Render and Neon redesign occasionally) — as long as the meaning matches, you're fine. Every Part ends with a "Check"; don't move on until it passes.
+For a setup from scratch, follow Part 0 and Parts A–J in order. The backend is [router-backend](https://github.com/beethoreven/router-backend), shared by several projects; the Render service itself and its keep-alive are set up per the router-backend README, and this guide only covers the settings mama-fufood adds (Part D). Part K is the move from the old standalone backend `mama-fufood-backend`; it's all done and kept as a record. Part L replaces the old signing key (whose certificate carries a city); a setup from scratch doesn't need it. You sign in to and configure every external service yourself; menu names on screen may differ slightly from what's written here (Google, Render and Neon redesign occasionally) — as long as the meaning matches, you're fine. Every Part ends with a "Check"; don't move on until it passes.
 
 #### Part 0. Before You Start
 
@@ -871,16 +986,12 @@ If your backend is on a different host than the one above, change the backend ho
 ```bash
 mkdir -p ~/Keys/mama-fufood
 KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
-"$KEYTOOL" -J-Duser.language=en -genkeypair -v -keystore ~/Keys/mama-fufood/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+"$KEYTOOL" -J-Duser.language=en -genkeypair -v -keystore ~/Keys/mama-fufood/upload-keystore-2026.jks -keyalg RSA -keysize 4096 -validity 10000 -alias upload -dname "CN=mama-fufood"
 ```
 
-The command asks one question at a time:
+The command only asks for a password: choose one (at least 6 characters) and type it twice; nothing shows on screen while typing.
 
-| Question | What to enter |
-|---|---|
-| Enter keystore password / Re-enter new password | A password of your choosing (at least 6 characters); nothing shows on screen while typing |
-| What is your first and last name? plus organizational unit, organization, City, State, country code | ★ These are written into the certificate inside the app's APK, so **anyone holding the APK can read them**. To keep them private, just press Enter to leave them empty |
-| Is CN=…, correct? | Type `yes` |
+★ The certificate's fields (name, organization, city, country) are written into the app's APK, so **anyone holding the APK can read them**. `-dname "CN=mama-fufood"` writes only the project name, so you won't be asked for them one by one.
 
 **G2.** Create `mama-fufood-app/android/key.properties` (inside the `android` folder, not directly under `mama-fufood-app/`; already in `.gitignore`). `storeFile` must be a full path — `~` is not expanded:
 
@@ -888,18 +999,18 @@ The command asks one question at a time:
 storePassword=the password you just chose
 keyPassword=the password you just chose
 keyAlias=upload
-storeFile=/Users/<your account>/Keys/mama-fufood/upload-keystore.jks
+storeFile=/Users/<your account>/Keys/mama-fufood/upload-keystore-2026.jks
 ```
 
 `<your account>` is this Mac's user name (the name of your home folder), not a Google or GitHub account. If unsure, run the line below in Terminal; the whole string it prints is the value for `storeFile`:
 
 ```bash
-echo ~/Keys/mama-fufood/upload-keystore.jks
+echo ~/Keys/mama-fufood/upload-keystore-2026.jks
 ```
 
 (With a key created by this command, the key password and the keystore password are the same.)
 
-**G3. Back up.** Once created, the key exists only on this computer at `~/Keys/mama-fufood/upload-keystore.jks`; the password is also written in plain text in G2's `key.properties` (on this computer only, never in git). If the computer breaks or is lost, the key is gone, so back it up somewhere off this computer:
+**G3. Back up.** Once created, the key exists only on this computer at `~/Keys/mama-fufood/upload-keystore-2026.jks`; the password is also written in plain text in G2's `key.properties` (on this computer only, never in git). If the computer breaks or is lost, the key is gone, so back it up somewhere off this computer:
 
 - **The key file**: copy it to cloud storage (Google Drive, iCloud, OneDrive are all fine) or a USB drive.
 - **The password**: keep it in a password manager, **not in the same place as the key file**. The key file without the password can't be used to sign the app; keeping them apart means one of them leaking is still safe.
@@ -911,7 +1022,7 @@ Why back up: until the app is on the store, the installed app only accepts this 
 
 ```bash
 KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
-"$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/Keys/mama-fufood/upload-keystore.jks -alias upload | grep SHA1
+"$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/Keys/mama-fufood/upload-keystore-2026.jks -alias upload | grep SHA1
 ```
 
 **Check**: Google Cloud's Clients list has two Android clients with different SHA-1s.
@@ -1042,6 +1153,125 @@ git -C mama-fufood-web push
 Old app versions that weren't updated can no longer reach the backend (update checks and feedback fail); records aren't affected, and updating the app fixes it.
 
 **Check**: the old URL no longer opens; `/mama-fufood/ready` at the new URL still shows `"ok": true`; the `mama-fufood-backend` repo doesn't open in a browser that isn't signed in to GitHub.
+
+#### Part L. Replace the App's Signing Key (No City in the Certificate)
+
+The original key was created with a city filled in, and the certificate's fields are written into every APK, where anyone holding it can read them. This Part replaces it with a new key whose certificate says only `CN=mama-fufood`, released together with the next version. A setup from scratch doesn't need it: a key created with Part G carries no city.
+
+★ After the key changes, the old version **can't be updated in place** (Android only accepts updates signed with the same key), so every phone must uninstall and then install the new version. Uninstalling deletes the data on the phone, so L1 always comes first.
+
+★ In Google Cloud, **don't create a new** Android client; change the existing client's SHA-1 to the new one (L5). The client ID stays the same, which guarantees the synced records, the export files' key and the photos in Google Drive stay reachable: Google's documentation doesn't say whether these permissions follow the client or the whole project. Once it's changed, phones that haven't been reinstalled can't sign in or use cloud features, so do L5 only after L1 is done on every phone, and switch all phones on the same day if you can.
+
+Unless stated otherwise, run the commands below from the root of the meta repo (`mama-fufood`).
+
+**L1. Back up every phone first.** First check whether it's done: if every phone's "App 設定" shows "最後同步" (last sync) as today with no "上次失敗" (last attempt failed), and the "媽媽記副食品" folder in Google Drive has today's export file (`.mff`) from every phone, skip to L2.
+
+1. In "App 設定", turn on "紀錄與雲端同步" (record sync) and "照片存到雲端" (photos to cloud), tap "現在同步" (sync now) and wait for "同步完成" (sync done).
+2. Top-right menu → "匯入/匯出" (import/export) → "匯出" (export). When it finishes, check in Google Drive that the "媽媽記副食品" folder has the new export file. The export holds every record and photo; it's the safety net for this key change.
+3. On the computer, download `mama-fufood-2.0.1.apk` from [GitHub Release v2.0.1](https://github.com/beethoreven/mama-fufood-app/releases/tag/v2.0.1) and keep it; L7 needs it to roll back (L10 removes it from GitHub).
+
+**L2. Create the new key (in Terminal).** First check whether it's done: if `~/Keys/mama-fufood/upload-keystore-2026.jks` already exists, skip to L3.
+
+```bash
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
+"$KEYTOOL" -J-Duser.language=en -genkeypair -v -keystore ~/Keys/mama-fufood/upload-keystore-2026.jks -keyalg RSA -keysize 4096 -validity 10000 -alias upload -dname "CN=mama-fufood"
+```
+
+It only asks for a password (twice; nothing shows on screen). The certificate fields come from `-dname`, so it won't ask for a name or city. Don't delete the old `upload-keystore.jks` yet; L7 needs it to roll back.
+
+Then make the folder and the file readable only by you:
+
+```bash
+chmod 700 ~/Keys/mama-fufood
+chmod 600 ~/Keys/mama-fufood/upload-keystore-2026.jks
+```
+
+**Check**: `ls -l ~/Keys/mama-fufood/upload-keystore-2026.jks` starts with `-rw-------`; in the output of the line below, `Owner:` is only `CN=mama-fufood`; write down the string after `SHA1:` for L5.
+
+```bash
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
+"$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/Keys/mama-fufood/upload-keystore-2026.jks -alias upload | grep -E "Owner|SHA1"
+```
+
+**L3. Back up the new key and update key.properties.** First check whether it's done: if `storeFile` in `mama-fufood-app/android/key.properties` already ends in `upload-keystore-2026.jks`, skip to L4.
+
+1. Back up the new key file and its password as in G3 (keep the two apart).
+2. Open `mama-fufood-app/android/key.properties`: set `storeFile` to the whole string printed by the line below, set both `storePassword` and `keyPassword` to the password from L2, and leave `keyAlias` as it is (`upload`).
+
+```bash
+echo ~/Keys/mama-fufood/upload-keystore-2026.jks
+```
+
+**L4. Build the new version.** First check whether it's done: if the check below prints `CN=mama-fufood`, skip to L5.
+
+Build with H2 from Part H, then check the APK's certificate (`36.0.0` is the Android SDK build-tools version; use the one you have, as listed by `ls ~/Library/Android/sdk/build-tools`):
+
+```bash
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ~/Library/Android/sdk/build-tools/36.0.0/apksigner verify --print-certs mama-fufood-app/build/app/outputs/flutter-apk/app-release.apk | grep "certificate DN"
+```
+
+**Check**: it prints `Signer #1 certificate DN: CN=mama-fufood`, with no city.
+
+**L5. Change the SHA-1 in Google Cloud (only after L1 is done on every phone).** First check whether it's done: if, under **Clients** in Google Auth Platform, the release Android client (package name `tw.com.tutorarthur.mamafufood`) already has the new SHA-1 from L2, skip to L6.
+
+Of the two Android clients, the release one is the one whose SHA-1 matches the old key (get the old key's SHA-1 with the command in step 1 of L7). Open it → change the **SHA-1 certificate fingerprint** to the new value from L2 → **Save**. Don't create a new client, and leave the Web client and the debug Android client alone.
+
+**Check**: this Android client's client ID is the same as before, and its SHA-1 is the new one.
+
+**L6. Try one phone first.** First check whether it's done: if this phone's "App 設定" shows the new version and its records and photos are all there, skip to L8.
+
+1. Connect the phone over USB (as in H3 and H4), then:
+
+```bash
+adb uninstall tw.com.tutorarthur.mamafufood
+adb install mama-fufood-app/build/app/outputs/flutter-apk/app-release.apk
+```
+
+2. Open the app, read through the data use principles, choose "從雲端取回" (restore from the cloud) on the first-baby screen, sign in with the same Google account, and wait for the records to come back.
+3. In "App 設定", make sure "照片存到雲端" is on, then open a record that has photos and check that they show.
+4. "匯入/匯出" → "匯入" (import), and pick the export file from L1: if "要匯入嗎？" (import?) appears with the number of babies and records, the export file's key is readable; tap Cancel.
+
+**Check**: the records and photos are all there, and the export file from L1 can be read. If anything is wrong, do L7 and stop.
+
+**L7. Roll back (only if something in L6 was wrong).** Afterwards the phone is back on 2.0.1 and the other phones carry on as before; stop here and note what was wrong in L6.
+
+1. Google Cloud: change the SHA-1 from L5 back to the old key's. The old key's SHA-1:
+
+```bash
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
+"$KEYTOOL" -J-Duser.language=en -list -v -keystore ~/Keys/mama-fufood/upload-keystore.jks -alias upload | grep SHA1
+```
+
+2. Point `mama-fufood-app/android/key.properties` back to the old key (`upload-keystore.jks` and its password).
+3. Phone: `adb uninstall tw.com.tutorarthur.mamafufood`, then `adb install <path to mama-fufood-2.0.1.apk from L1>`; open it and choose "從雲端取回".
+
+**Check**: the phone runs 2.0.1 with its records and photos.
+
+**L8. Publish the new version (only after L6 passed).** First check whether it's done: if the website's "下載最新版媽媽記副食品" link points to the new version, skip to L9.
+
+1. Create the new release in `mama-fufood-app`'s GitHub Releases with the versioned `mama-fufood-<version>.apk` built in L4; the notes say that this version changes the signing key and can't be installed over the old one: sync and export, uninstall the old version, then install.
+2. Set `apkVersion` in the website's `js/config.js` to the new version, rerun the demo generator, commit and push (same commands as K2).
+
+**Check**: in a browser that isn't signed in, the website's download is the new version.
+
+**L9. The other phones.** First check whether it's done: if every phone's "App 設定" shows the new version, skip to L10.
+
+On each phone: L1 is done → uninstall the app → download the new version from the website in the phone's browser and install it → choose "從雲端取回" → check that the records and photos are all there.
+
+**L10. Remove the old APKs (only after every phone has switched).** First check whether it's done: if no release up to v2.0.1 in `mama-fufood-app`'s Releases has an `.apk` attached, you're done.
+
+The old APKs' certificate carries the city, so remove them from GitHub (the release notes stay). Run from any folder:
+
+```bash
+gh release delete-asset v2.0.1 mama-fufood-2.0.1.apk -R beethoreven/mama-fufood-app --yes
+gh release delete-asset v2.0.0 mama-fufood-2.0.0.apk -R beethoreven/mama-fufood-app --yes
+gh release delete-asset v1.2.0 mama-fufood-1.2.0.apk -R beethoreven/mama-fufood-app --yes
+gh release delete-asset v1.1.0 mama-fufood-1.1.0.apk -R beethoreven/mama-fufood-app --yes
+```
+
+The old key no longer signs the app; keeping it with its backup is enough.
+
+**Check**: in a browser that isn't signed in, none of the old releases has an APK to download.
 
 ### Known Limitations
 
